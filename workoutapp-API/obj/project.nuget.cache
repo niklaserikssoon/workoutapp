@@ -1,0 +1,11 @@
+{
+  "version": 2,
+  "dgSpecHash": "BbHYbLCPq2I=",
+  "success": true,
+  "projectFilePath": "C:\\Users\\nikla\\source\\repos\\workoutapp-API\\workoutapp-API\\workoutapp-API.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\nikla\\.nuget\\packages\\microsoft.aspnetcore.openapi\\9.0.11\\microsoft.aspnetcore.openapi.9.0.11.nupkg.sha512",
+    "C:\\Users\\nikla\\.nuget\\packages\\microsoft.openapi\\1.6.17\\microsoft.openapi.1.6.17.nupkg.sha512"
+  ],
+  "logs": []
+}
