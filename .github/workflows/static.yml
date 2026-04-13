@@ -1,29 +1,29 @@
-﻿name: CI
+﻿name: Release CI
 
 on:
   push:
-    branches: [dev]
+    branches: [ "main" ]
   pull_request:
-    branches: [dev]
+    branches: [ "main" ]
 
 jobs:
-  build-and-test:
+  build_and_test:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checka ut kod
-        uses: actions/checkout@v4
+    - name: Checkout repository
+      uses: actions/checkout@v4
 
-      - name: Installera .NET
-        uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 8.0.x
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: 9.0.x
 
-      - name: Restore
-        run: dotnet restore
+    - name: Restore dependencies
+      run: dotnet restore
 
-      - name: Build
-        run: dotnet build --no-restore --configuration Release
+    - name: Build
+      run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test --no-build --configuration Release
+    - name: Run tests
+      run: dotnet test --configuration Release --no-restore --verbosity normal
