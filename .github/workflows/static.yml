@@ -11,19 +11,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checka ut kod
+      - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Installera .NET
+      - name: Install .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: 8.0.x
+          dotnet-version: 9.0.x
 
       - name: Restore
         run: dotnet restore
 
       - name: Build
-        run: dotnet build --no-restore --configuration Release
+        run: dotnet build --configuration Release --no-restore
 
-      - name: Test
-        run: dotnet test --no-build --configuration Release
+      - name: Tests
+        run: dotnet test --configuration Release --no-build --verbosity normal
