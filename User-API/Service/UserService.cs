@@ -20,8 +20,9 @@ namespace User_API.Service
             {
                 FirstName = userCreateDto.FirstName,
                 LastName = userCreateDto.LastName,
+                UserName = userCreateDto.UserName,
                 Email = userCreateDto.Email,
-                PasswordHash = userCreateDto.password,
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userCreateDto.password)
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();

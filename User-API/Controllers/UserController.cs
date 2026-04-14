@@ -1,11 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using User_API.Models;
-using User_API.DTOs;
+﻿using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
 using User_API.Data;
+using User_API.DTOs;
+using User_API.Models;
 
 namespace User_API.Controllers
 {
-    [Route("api/[controller]")]
+    [ApiController]
+    [ApiVersion("1.0")]
+    [Route("api/v{version:apiVersion}/[controller]")]
+    
     public class UserController : ControllerBase
     {
         private readonly UserDbContext _context;
@@ -22,6 +26,7 @@ namespace User_API.Controllers
             {
                 FirstName = userCreateDto.FirstName,
                 LastName = userCreateDto.LastName,
+                UserName = userCreateDto.UserName,
                 Email = userCreateDto.Email,
                 PasswordHash = userCreateDto.password
             };
