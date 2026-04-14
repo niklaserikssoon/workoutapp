@@ -1,4 +1,5 @@
-.vs
-bin
-obj
-appsettings.json
+.vs/
+**/bin/
+**/obj/
+*.user
+appsettings.Development.json
