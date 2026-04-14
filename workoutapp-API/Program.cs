@@ -14,6 +14,12 @@ builder.Services.AddHttpClient<IExternalExercise, ExerciseService>(client =>
     client.BaseAddress = new Uri("https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/");
 });
 
+builder.Services.AddHttpClient("WorkoutApi", client =>
+{
+    var baseUrl = builder.Configuration["ServiceUrls:WorkoutApi"];
+    client.BaseAddress = new Uri(baseUrl!);
+});
+
 // OpenAPI, single registration with JWT security definition
 builder.Services.AddOpenApi("v1", options =>
 {
