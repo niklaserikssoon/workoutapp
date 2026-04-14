@@ -17,6 +17,12 @@ builder.Services.AddHttpClient<IExternalExercise, ExerciseService>(client =>
     client.BaseAddress = new Uri("https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/");
 });
 
+builder.Services.AddHttpClient("UserApi", client =>
+{
+    var baseUrl = builder.Configuration["ServiceUrls:UserApi"];
+    client.BaseAddress = new Uri(baseUrl!);
+});
+
 // API versioning
 builder.Services.AddApiVersioning(options =>
 {
