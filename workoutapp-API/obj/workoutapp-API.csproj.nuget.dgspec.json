@@ -1,23 +1,23 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\nikla\\Source\\Repos\\workoutapp\\workoutapp-API\\workoutapp-API.csproj": {}
+    "C:\\Users\\Administratör\\source\\repos\\workoutapp\\workoutapp-API\\Workoutapp-API.csproj": {}
   },
   "projects": {
-    "C:\\Users\\nikla\\Source\\Repos\\workoutapp\\workoutapp-API\\workoutapp-API.csproj": {
+    "C:\\Users\\Administratör\\source\\repos\\workoutapp\\workoutapp-API\\Workoutapp-API.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\nikla\\Source\\Repos\\workoutapp\\workoutapp-API\\workoutapp-API.csproj",
-        "projectName": "workoutapp-API",
-        "projectPath": "C:\\Users\\nikla\\Source\\Repos\\workoutapp\\workoutapp-API\\workoutapp-API.csproj",
-        "packagesPath": "C:\\Users\\nikla\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\nikla\\Source\\Repos\\workoutapp\\workoutapp-API\\obj\\",
+        "projectUniqueName": "C:\\Users\\Administratör\\source\\repos\\workoutapp\\workoutapp-API\\Workoutapp-API.csproj",
+        "projectName": "Workoutapp-API",
+        "projectPath": "C:\\Users\\Administratör\\source\\repos\\workoutapp\\workoutapp-API\\Workoutapp-API.csproj",
+        "packagesPath": "C:\\Users\\Administratör\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\Administratör\\source\\repos\\workoutapp\\workoutapp-API\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
         ],
         "configFilePaths": [
-          "C:\\Users\\nikla\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\Administratör\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.FallbackLocation.config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
@@ -26,7 +26,6 @@
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
-          "C:\\Program Files\\dotnet\\library-packs": {},
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
@@ -55,6 +54,20 @@
               "target": "Package",
               "version": "[8.1.1, )"
             },
+            "Microsoft.EntityFrameworkCore.SqlServer": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.EntityFrameworkCore.Tools": {
+              "include": "Runtime, Build, Native, ContentFiles, Analyzers, BuildTransitive",
+              "suppressParent": "All",
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
+            "Microsoft.VisualStudio.Web.CodeGeneration.Design": {
+              "target": "Package",
+              "version": "[9.0.0, )"
+            },
             "Swashbuckle.AspNetCore": {
               "target": "Package",
               "version": "[10.1.7, )"
@@ -79,7 +92,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.308/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\9.0.311/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

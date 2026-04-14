@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.14.36717.8
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "workoutapp-API", "workoutapp-API\workoutapp-API.csproj", "{8ECA2327-75C6-46F2-B614-33B65CAC3C6A}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workoutapp-API", "workoutapp-API\Workoutapp-API.csproj", "{8ECA2327-75C6-46F2-B614-33B65CAC3C6A}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "User-API", "User-API\User-API.csproj", "{8B2A7F00-B91E-2497-53ED-E18E243B7A9C}"
 EndProject

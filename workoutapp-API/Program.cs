@@ -1,7 +1,12 @@
 using Asp.Versioning;
 using workoutapp_API.services;
+using WorkoutApp.API.Data;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDbContext<WorkoutDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
 
 // Add services to the container.
 builder.Services.AddControllers();
