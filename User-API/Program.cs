@@ -8,6 +8,12 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+builder.Services.AddHttpClient("WorkoutApi", client =>
+{
+    var baseUrl = builder.Configuration["ServiceUrls:WorkoutApi"];
+    client.BaseAddress = new Uri(baseUrl!);
+});
+
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
