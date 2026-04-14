@@ -1,11 +1,16 @@
 using Asp.Versioning;
 using Scalar.AspNetCore;
 using Microsoft.OpenApi.Models;
+using Microsoft.EntityFrameworkCore;
+using WorkoutApp.API.Data;
 using workoutapp_API.services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+
+builder.Services.AddDbContext<WorkoutDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
 
 // Memory cache + typed HTTP client
 builder.Services.AddMemoryCache();
