@@ -11,6 +11,9 @@ namespace User_API.DTOs
         [StringLength(50)]
         public string LastName { get; set; } = null!;
         [Required]
+        [StringLength(50)]
+        public string UserName { get; set; } = null!;
+        [Required]
         [EmailAddress]
         [StringLength(150)]
         public string Email { get; set; } = null!;
