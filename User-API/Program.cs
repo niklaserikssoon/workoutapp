@@ -16,8 +16,6 @@ builder.Services.AddControllers(options =>
     options.Filters.Add<PerformanceFilter>();
 });
 
-builder.Services.AddOpenApi();
-
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddHttpClient("WorkoutApi", client =>
@@ -70,7 +68,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // CORS-policy
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
