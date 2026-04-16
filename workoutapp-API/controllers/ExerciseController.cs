@@ -24,9 +24,11 @@ namespace workoutapp_API.controllers
         /// <summary>
         /// Returns a paginated list of exercises.
         /// </summary>
+        /// <param name="name">Optional name filter</param>
+        /// <param name="level">Optional level filter (e.g. beginner, intermediate, expert)</param>
+        /// <param name="muscle">Optional muscle group filter</param>
         /// <param name="page">Page number (default: 1)</param>
         /// <param name="pageSize">Items per page (default: 20)</param>
-        /// <param name="name">Optional name filter</param>
         /// <response code="200">Success</response>
         /// <response code="401">Unauthorized</response>
         [HttpGet]

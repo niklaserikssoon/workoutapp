@@ -10,8 +10,6 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.AddOpenApi();
-
 builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddHttpClient("WorkoutApi", client =>
@@ -64,7 +62,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // CORS-policy
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 

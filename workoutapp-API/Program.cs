@@ -1,7 +1,7 @@
 using Asp.Versioning;
-using Scalar.AspNetCore;
-using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using WorkoutApp.API.Data;
 using workoutapp_API.services;
 
@@ -66,11 +66,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501")  //Frontend port
+            .WithOrigins("http://localhost:5501")
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Authorization", "Content-Type");
     });
 });
+
+builder.Services.AddDbContext<WorkoutDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
@@ -85,7 +88,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend"); // CORS-policy
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
