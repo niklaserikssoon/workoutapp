@@ -11,7 +11,7 @@ namespace workoutapp_API.controllers
     /// </summary>
     [ApiController]
     [ApiVersion("1.0")]
-    [Route("api/v{version:apiVersion}/[controller]")]
+    [Route("api/v{version:apiVersion}/exercises")]
     public class ExerciseController : ControllerBase
     {
         private readonly IExternalExercise _externalExercise;

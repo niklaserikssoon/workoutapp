@@ -1,14 +1,20 @@
-using User_API.Data;
-using Microsoft.AspNetCore.Mvc;
-using User_API.Models;
-using Microsoft.EntityFrameworkCore;
-using User_API.Service;
 using Asp.Versioning;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using User_API.Data;
+using User_API.Filters;
+using User_API.Models;
+using User_API.Service;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Custom Action Filters
+    options.Filters.Add<ValidateModelFilter>();
+    options.Filters.Add<PerformanceFilter>();
+});
 
 builder.Services.AddOpenApi();
 
@@ -45,7 +51,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501") //Frontend port
+            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501") //Frontend port
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Authorization", "Content-Type");
     });
