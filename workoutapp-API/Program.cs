@@ -1,13 +1,19 @@
 using Asp.Versioning;
-using Scalar.AspNetCore;
-using Microsoft.OpenApi.Models;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
 using WorkoutApp.API.Data;
+using workoutapp_API.Filters;
 using workoutapp_API.services;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Custom Action Filters
+    options.Filters.Add<ValidateModelFilter>();
+    options.Filters.Add<PerformanceFilter>();
+});
 
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
@@ -66,7 +72,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501")  //Frontend port
+            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501")  //Frontend port
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Authorization", "Content-Type");
     });
