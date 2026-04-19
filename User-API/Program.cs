@@ -24,8 +24,9 @@ builder.Services.AddHttpClient("WorkoutApi", client =>
     client.BaseAddress = new Uri(baseUrl!);
 });
 
+
 builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Configure the HTTP request pipeline.
 builder.Services.AddOpenApi("v1");
