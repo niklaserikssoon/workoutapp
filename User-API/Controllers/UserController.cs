@@ -8,6 +8,9 @@ using User_API.Models;
 
 namespace User_API.Controllers
 {
+    /// <summary>
+    /// Manages user registration and authentication.
+    /// </summary>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
@@ -21,6 +24,12 @@ namespace User_API.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Registers a new user account.
+        /// </summary>
+        /// <param name="userCreateDto">User registration details</param>
+        /// <response code="200">User created successfully</response>
+        /// <response code="400">Invalid input</response>
         [HttpPost("register")]
         public async Task<IActionResult> CreateUserAsync([FromBody] CreateUserDTO userCreateDto)
         {
@@ -38,6 +47,13 @@ namespace User_API.Controllers
             return Ok(user);
         }
 
+        /// <summary>
+        /// Authenticates a user with username and password.
+        /// </summary>
+        /// <param name="dto">Login credentials</param>
+        /// <response code="200">Login successful, returns user info</response>
+        /// <response code="400">Missing credentials</response>
+        /// <response code="401">Invalid username or password</response>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
