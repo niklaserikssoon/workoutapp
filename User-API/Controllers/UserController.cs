@@ -75,5 +75,69 @@ namespace User_API.Controllers
                 user.LastName
             });
         }
+
+        /// <summary>
+        /// Retrieves a user by ID.
+        /// </summary>
+        /// <param name="id">The user ID</param>
+        /// <response code="200">Returns the user</response>
+        /// <response code="404">User not found</response>
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetUserAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            return Ok(new
+            {
+                user.UserId,
+                user.UserName,
+                user.Email,
+                user.FirstName,
+                user.LastName
+            });
+        }
+
+        /// <summary>
+        /// Updates an existing user's details.
+        /// </summary>
+        /// <param name="id">The user ID</param>
+        /// <param name="dto">Updated user details</param>
+        /// <response code="204">Update successful</response>
+        /// <response code="400">Invalid input</response>
+        /// <response code="404">User not found</response>
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateUserAsync(int id, [FromBody] UpdateUserDTO dto)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            user.FirstName = dto.FirstName;
+            user.LastName = dto.LastName;
+            user.Email = dto.Email;
+
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Deletes a user by ID.
+        /// </summary>
+        /// <param name="id">The user ID</param>
+        /// <response code="204">Deletion successful</response>
+        /// <response code="404">User not found</response>
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteUserAsync(int id)
+        {
+            var user = await _context.Users.FindAsync(id);
+            if (user == null)
+                return NotFound();
+
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }
