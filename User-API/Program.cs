@@ -6,6 +6,8 @@ using User_API.Data;
 using User_API.Filters;
 using User_API.Models;
 using User_API.Service;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -50,10 +52,24 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501") //Frontend port
+            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501") // Frontend port
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Authorization", "Content-Type");
     });
+});
+
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("fixed", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 20;                                        // max 20 requests
+        limiterOptions.Window = TimeSpan.FromSeconds(30);                       // per 30 seconds
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst; //
+        limiterOptions.QueueLimit = 5;                                          // queue up to 5 extra requests
+    });
+
+    options.RejectionStatusCode = 429;                                          // HTTP 429 = Too Many Requests Status Code
 });
 
 var app = builder.Build();
@@ -69,9 +85,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseRateLimiter();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("fixed"); // Adds rate limiting globally to all controllers. (Instead of per controller or endpoint)
 
 app.Run();
