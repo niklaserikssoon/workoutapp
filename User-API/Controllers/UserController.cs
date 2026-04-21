@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 using User_API.Data;
 using User_API.DTOs;
 using User_API.Models;
@@ -44,7 +45,14 @@ namespace User_API.Controllers
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
-            return Ok(user);
+            return Ok(new
+            {
+                user.UserId,
+                user.UserName,
+                user.Email,
+                user.FirstName,
+                user.LastName
+            });
         }
 
         /// <summary>
@@ -107,6 +115,7 @@ namespace User_API.Controllers
         /// <response code="204">Update successful</response>
         /// <response code="400">Invalid input</response>
         /// <response code="404">User not found</response>
+        [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUserAsync(int id, [FromBody] UpdateUserDTO dto)
         {
@@ -128,6 +137,7 @@ namespace User_API.Controllers
         /// <param name="id">The user ID</param>
         /// <response code="204">Deletion successful</response>
         /// <response code="404">User not found</response>
+        [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserAsync(int id)
         {
