@@ -5,6 +5,8 @@ using Scalar.AspNetCore;
 using WorkoutApp.API.Data;
 using workoutapp_API.Filters;
 using workoutapp_API.services;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,8 +80,19 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("fixed", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 20;                                        // max 20 requests
+        limiterOptions.Window = TimeSpan.FromSeconds(30);                       // per 30 seconds
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst; //
+        limiterOptions.QueueLimit = 5;                                          // queue up to 5 extra requests
+    });
+
+    options.RejectionStatusCode = 429;                                          // HTTP 429 = Too Many Requests Status Code
+});
 
 var app = builder.Build();
 
@@ -94,9 +107,11 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseRateLimiter();
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
 app.UseAuthorization();
-app.MapControllers();
+app.MapControllers().RequireRateLimiting("fixed"); // Adds rate limiting globally to all controllers. (Instead of per controller or endpoint)
 
 app.Run();
