@@ -8,8 +8,10 @@ public class Workout
     [Key]
     public int WorkoutId { get; set; }
 
+    [Required]
     public int UserId { get; set; }
 
+    [Required]
     public int ExerciseId { get; set; }
 
     [ForeignKey(nameof(ExerciseId))]
