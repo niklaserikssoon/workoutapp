@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using WorkoutApp.API.Data;
+using WorkoutApp.API.Services;
 using workoutapp_API.Filters;
 using workoutapp_API.services;
 using Microsoft.AspNetCore.RateLimiting;
@@ -18,7 +19,7 @@ builder.Services.AddControllers(options =>
 });
 
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Memory cache + typed HTTP client
 builder.Services.AddMemoryCache();
@@ -32,6 +33,8 @@ builder.Services.AddHttpClient("WorkoutApi", client =>
     var baseUrl = builder.Configuration["ServiceUrls:WorkoutApi"];
     client.BaseAddress = new Uri(baseUrl!);
 });
+
+builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
 
 // OpenAPI, single registration with JWT security definition
 builder.Services.AddOpenApi("v1", options =>
