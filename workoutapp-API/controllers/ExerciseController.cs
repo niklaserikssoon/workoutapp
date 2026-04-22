@@ -1,6 +1,7 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WorkoutApp.API.Services;
 using workoutapp_API.DTOs;
 using workoutapp_API.services;
 
@@ -15,11 +16,16 @@ namespace workoutapp_API.controllers
     public class ExerciseController : ControllerBase
     {
         private readonly IExternalExercise _externalExercise;
+        private readonly ISaveExerciseService _exerciseService;
 
-        public ExerciseController(IExternalExercise externalExercise)
+        public ExerciseController(
+            IExternalExercise externalExercise,
+            ISaveExerciseService exerciseService)
         {
             _externalExercise = externalExercise;
+            _exerciseService = exerciseService;
         }
+
 
         /// <summary>
         /// Returns a paginated list of exercises.
@@ -61,6 +67,16 @@ namespace workoutapp_API.controllers
                 TotalCount = total,
                 TotalPages = (int)Math.Ceiling(total / (double)pageSize)
             });
+        }
+        [HttpPost("save/{id}")]
+        public async Task<IActionResult> SaveExercise(string id)
+        {
+            var savedExercise = await _exerciseService.SaveExerciseAsync(id);
+            if (savedExercise == null)
+            {
+                return NotFound(new { Message = $"Exercise with ID '{id}' not found in external API." });
+            }
+            return Ok(savedExercise);
         }
     }
 }
