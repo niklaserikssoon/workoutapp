@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Caching.Memory;
 using WorkoutApp.API.Data;
 using workoutapp_API.DTOs;
 using WorkoutApp.API.Models;
@@ -17,10 +18,12 @@ namespace workoutapp_API.controllers
     public class WorkoutController : ControllerBase
     {
         private readonly WorkoutDbContext _context;
+        private readonly IMemoryCache _memoryCache;
 
-        public WorkoutController(WorkoutDbContext context)
+        public WorkoutController(WorkoutDbContext context, IMemoryCache memoryCache)
         {
             _context = context;
+            _memoryCache = memoryCache;
         }
 
         /// <summary>
@@ -80,22 +83,32 @@ namespace workoutapp_API.controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<WorkoutDTO>> GetWorkoutAsync(int id)
         {
-            var workout = await _context.Workouts
-                .Include(w => w.Exercise)
-                .FirstOrDefaultAsync(w => w.WorkoutId == id);
+            var cacheKey = $"workout_{id}";
 
-            if (workout == null)
-                return NotFound();
-
-            return Ok(new WorkoutDTO
+            if (!_memoryCache.TryGetValue(cacheKey, out WorkoutDTO? cached))
             {
-                WorkoutId = workout.WorkoutId,
-                UserId = workout.UserId,
-                ExerciseId = workout.ExerciseId,
-                ExerciseName = workout.Exercise.ExerciseName,
-                PrimaryMuscle = workout.Exercise.PrimaryMuscle
-            });
+                var workout = await _context.Workouts
+                    .Include(w => w.Exercise)
+                    .FirstOrDefaultAsync(w => w.WorkoutId == id);
+
+                if (workout == null)
+                    return NotFound();
+
+                cached = new WorkoutDTO
+                {
+                    WorkoutId = workout.WorkoutId,
+                    UserId = workout.UserId,
+                    ExerciseId = workout.ExerciseId,
+                    ExerciseName = workout.Exercise.ExerciseName,
+                    PrimaryMuscle = workout.Exercise.PrimaryMuscle
+                };
+
+                _memoryCache.Set(cacheKey, cached, TimeSpan.FromMinutes(10));
+            }
+
+            return Ok(cached);
         }
+
 
         /// <summary>
         /// Creates a new workout entry.
@@ -142,6 +155,7 @@ namespace workoutapp_API.controllers
 
             _context.Workouts.Remove(workout);
             await _context.SaveChangesAsync();
+            _memoryCache.Remove($"workout_{id}");
             return NoContent();
         }
     }
