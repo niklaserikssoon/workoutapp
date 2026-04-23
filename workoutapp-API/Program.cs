@@ -1,10 +1,13 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using workoutapp_API.Filters;
+using workoutapp_API.services;
 using Scalar.AspNetCore;
 using WorkoutApp.API.Data;
-using workoutapp_API.services.Exercises;
 using workoutapp_API.services.External;
+using workoutapp_API.services.Exercises;
+
 
 
 var builder = WebApplication.CreateBuilder(args);
@@ -17,7 +20,7 @@ builder.Services.AddDbContext<WorkoutDbContext>(options =>
     options.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=WorkoutDb;Trusted_Connection=True;TrustServerCertificate=True;"));
 
 
-// OpenAPI
+// // OpenAPI with XML comments for documentation
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
@@ -45,13 +48,12 @@ builder.Services.AddRateLimiter(options =>
 
     options.AddFixedWindowLimiter("writePolicy", limiterOptions =>
     {
-        limiterOptions.PermitLimit = 3; 
-        limiterOptions.Window = TimeSpan.FromSeconds(10); 
-        limiterOptions.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
-        limiterOptions.QueueLimit = 0; 
+        limiterOptions.PermitLimit = 3; // Allow 3 requests per window
+        limiterOptions.Window = TimeSpan.FromSeconds(10); // 10-second window
+        limiterOptions.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst; 
+        limiterOptions.QueueLimit = 0; // No queuing, reject requests immediately if the limit is reached
     });
 });
-
 
 // API versioning
 builder.Services.AddApiVersioning(options =>
@@ -61,6 +63,21 @@ builder.Services.AddApiVersioning(options =>
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
 });
+
+
+// CORS-Policy
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501")  //Frontend port
+            .WithMethods("GET", "POST", "PUT", "DELETE")
+            .WithHeaders("Authorization", "Content-Type");
+    });
+});
+
+
 
 var app = builder.Build();
 
@@ -73,6 +90,7 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+
 app.UseAuthorization();
 
 app.UseRateLimiter();
@@ -82,5 +100,6 @@ app.MapScalarApiReference(options =>
 { 
     options.WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json");
 });
+
 
 app.Run();
