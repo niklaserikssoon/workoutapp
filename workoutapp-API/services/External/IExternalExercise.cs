@@ -1,6 +1,6 @@
 ﻿using workoutapp_API.DTOs;
 
-namespace workoutapp_API.services
+namespace workoutapp_API.services.External
 {
     public interface IExternalExercise
     {

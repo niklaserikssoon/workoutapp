@@ -1,13 +1,13 @@
 ﻿using Microsoft.Extensions.Caching.Memory;
 using workoutapp_API.DTOs;
-using workoutapp_API.services;
+using workoutapp_API.services.External;
 
-public class ExerciseService : IExternalExercise
+public class ExternalExercise : IExternalExercise
 {
     private readonly HttpClient _httpClient;
     private readonly IMemoryCache _memoryCache;
 
-    public ExerciseService(HttpClient httpClient, IMemoryCache memoryCache)
+    public ExternalExercise(HttpClient httpClient, IMemoryCache memoryCache)
     {
         _httpClient = httpClient;
         _memoryCache = memoryCache;

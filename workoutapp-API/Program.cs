@@ -1,56 +1,57 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using WorkoutApp.API.Data;
-using workoutapp_API.Filters;
-using workoutapp_API.services;
+using workoutapp_API.services.Exercises;
+using workoutapp_API.services.External;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers(options =>
+// Add services to the container.
+builder.Services.AddControllers();
+
+// Database context
+builder.Services.AddDbContext<WorkoutDbContext>(options =>
+    options.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=WorkoutDb;Trusted_Connection=True;TrustServerCertificate=True;"));
+
+
+// OpenAPI
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
 {
-    // Custom Action Filters
-    options.Filters.Add<ValidateModelFilter>();
-    options.Filters.Add<PerformanceFilter>();
+    var xmlFileName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFileName));
 });
 
-builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
 
-// Memory cache + typed HTTP client
+//  cache
 builder.Services.AddMemoryCache();
-builder.Services.AddHttpClient<IExternalExercise, ExerciseService>(client =>
+
+// External exercises (HTTP client)
+builder.Services.AddHttpClient<IExternalExercise, ExternalExercise>(client =>
 {
     client.BaseAddress = new Uri("https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/");
 });
 
-builder.Services.AddHttpClient("WorkoutApi", client =>
-{
-    var baseUrl = builder.Configuration["ServiceUrls:WorkoutApi"];
-    client.BaseAddress = new Uri(baseUrl!);
-});
+// Local exercise service 
+builder.Services.AddScoped<IExerciseService, ExerciseService>();
 
-// OpenAPI, single registration with JWT security definition
-builder.Services.AddOpenApi("v1", options =>
+
+builder.Services.AddRateLimiter(options =>
 {
-    options.AddDocumentTransformer((doc, context, ct) =>
+    options.RejectionStatusCode = 429;
+
+    options.AddFixedWindowLimiter("writePolicy", limiterOptions =>
     {
-        doc.Components ??= new();
-        doc.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
-        {
-            ["Bearer"] = new OpenApiSecurityScheme
-            {
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                BearerFormat = "JWT",
-                In = ParameterLocation.Header,
-                Description = "Enter your JWT token"
-            }
-        };
-        return Task.CompletedTask;
+        limiterOptions.PermitLimit = 3; 
+        limiterOptions.Window = TimeSpan.FromSeconds(10); 
+        limiterOptions.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst;
+        limiterOptions.QueueLimit = 0; 
     });
 });
+
 
 // API versioning
 builder.Services.AddApiVersioning(options =>
@@ -59,44 +60,27 @@ builder.Services.AddApiVersioning(options =>
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
-})
-.AddApiExplorer(options =>
-{
-    options.GroupNameFormat = "'v'VVV";
-    options.SubstituteApiVersionInUrl = true;
 });
-
-// CORS-Policy
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy
-            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501")  //Frontend port
-            .WithMethods("GET", "POST", "PUT", "DELETE")
-            .WithHeaders("Authorization", "Content-Type");
-    });
-});
-
-builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 var app = builder.Build();
 
+// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.MapOpenApi();
-    app.MapScalarApiReference(options =>
-    {
-        options.Title = "Workout API";
-        options.Theme = ScalarTheme.DeepSpace;
-    });
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-app.UseCors("AllowFrontend");
-app.UseAuthentication();
+
 app.UseAuthorization();
+
+app.UseRateLimiter();
+
 app.MapControllers();
+app.MapScalarApiReference(options => 
+{ 
+    options.WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json");
+});
 
 app.Run();
