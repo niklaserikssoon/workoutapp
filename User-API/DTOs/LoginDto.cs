@@ -2,7 +2,7 @@
 
 namespace User_API.DTOs
 {
-    public class LoginDto
+    public class LoginDTO
     {
         [Required]
         [StringLength(50)]

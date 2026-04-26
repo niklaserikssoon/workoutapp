@@ -1,4 +1,4 @@
-﻿using Humanizer;
+﻿using Microsoft.EntityFrameworkCore;
 using User_API.Data;
 using User_API.DTOs;
 using User_API.Models;
@@ -22,31 +22,56 @@ namespace User_API.Service
                 LastName = userCreateDto.LastName,
                 UserName = userCreateDto.UserName,
                 Email = userCreateDto.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userCreateDto.password)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(userCreateDto.Password)
             };
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
             return user;
         }
-
-        public Task<bool> DeleteUserAsync(int id)
+        public async Task<User?> GetUserByUsernameAsync(string username)
         {
-            throw new NotImplementedException();
+            return await _context.Users
+                .FirstOrDefaultAsync(u => u.UserName == username);
+        }
+        public async Task<User?> GetUserByIdAsync(int id)
+        {
+            return await _context.Users.FindAsync(id);
+        }
+        public async Task<IEnumerable<User>> GetAllUsersAsync()
+        {
+            return await _context.Users.ToListAsync();
+        }
+        public async Task<User?> UpdateUserAsync(int id, UpdateUserDTO userUpdateDto)
+        {
+            var user = await _context.Users.FindAsync(id);
+
+            if (user == null)
+            {
+                return null;
+            }
+
+            user.FirstName = userUpdateDto.FirstName;
+            user.LastName = userUpdateDto.LastName;
+            user.Email = userUpdateDto.Email;
+
+            await _context.SaveChangesAsync();
+
+            return user;
         }
 
-        public Task<IEnumerable<User>> GetAllUsersAsync()
+        public async Task<bool> DeleteUserAsync(int id)
         {
-            throw new NotImplementedException();
-        }
+            var user = await _context.Users.FindAsync(id);
 
-        public Task<User> GetUserByIdAsync(int id)
-        {
-            throw new NotImplementedException();
-        }
+            if (user == null)
+            {
+                return false;
+            }
 
-        public Task<User> UpdateUserAsync(int id, UpdateUserDTO userUpdateDto)
-        {
-            throw new NotImplementedException();
+            _context.Users.Remove(user);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.Extensions.Caching.Memory;
 using WorkoutApp.API.Data;
 using workoutapp_API.DTOs;
 using WorkoutApp.API.Models;
+using System.Security.Claims;
 
 namespace workoutapp_API.controllers
 {
@@ -27,9 +28,8 @@ namespace workoutapp_API.controllers
         }
 
         /// <summary>
-        /// Returns paginated list of workouts for a user.
+        /// Returns a paginated list of workouts for the authenticated user.
         /// </summary>
-        /// <param name="userId">Filter by user ID</param>
         /// <param name="page">Page number (default: 1)</param>
         /// <param name="pageSize">Items per page (default: 20)</param>
         /// <response code="200">Success</response>
@@ -37,18 +37,23 @@ namespace workoutapp_API.controllers
         [Authorize]
         [HttpGet]
         public async Task<ActionResult<PagedResult<WorkoutDTO>>> GetWorkoutsAsync(
-            [FromQuery] int? userId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
             var query = _context.Workouts
                 .Include(w => w.Exercise)
+                .Where(w => w.UserId == userId)
                 .AsQueryable();
 
-            if (userId.HasValue)
-                query = query.Where(w => w.UserId == userId.Value);
-
             var total = await query.CountAsync();
+
             var items = await query
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -73,7 +78,7 @@ namespace workoutapp_API.controllers
         }
 
         /// <summary>
-        /// Returns a single workout by ID.
+        /// Returns a single workout belonging to the authenticated user.
         /// </summary>
         /// <param name="id">Workout ID</param>
         /// <response code="200">Returns the workout</response>
@@ -83,13 +88,20 @@ namespace workoutapp_API.controllers
         [HttpGet("{id}")]
         public async Task<ActionResult<WorkoutDTO>> GetWorkoutAsync(int id)
         {
-            var cacheKey = $"workout_{id}";
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var cacheKey = $"workout_{userId}_{id}";
 
             if (!_memoryCache.TryGetValue(cacheKey, out WorkoutDTO? cached))
             {
                 var workout = await _context.Workouts
                     .Include(w => w.Exercise)
-                    .FirstOrDefaultAsync(w => w.WorkoutId == id);
+                    .FirstOrDefaultAsync(w => w.WorkoutId == id && w.UserId == userId);
 
                 if (workout == null)
                     return NotFound();
@@ -111,9 +123,9 @@ namespace workoutapp_API.controllers
 
 
         /// <summary>
-        /// Creates a new workout entry.
+        /// Creates a new workout entry for the authenticated user.
         /// </summary>
-        /// <param name="dto">Workout details</param>
+        /// <param name="dto">Workout details. The user ID is taken from the JWT token.</param>
         /// <response code="201">Created successfully</response>
         /// <response code="400">Invalid input</response>
         /// <response code="401">Unauthorized</response>
@@ -121,9 +133,24 @@ namespace workoutapp_API.controllers
         [HttpPost]
         public async Task<ActionResult<WorkoutDTO>> CreateWorkoutAsync([FromBody] CreateWorkoutDTO dto)
         {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var exerciseExists = await _context.Exercises
+                .AnyAsync(e => e.ExerciseId == dto.ExerciseId);
+
+            if (!exerciseExists)
+            {
+                return BadRequest(new { Message = "Exercise does not exist." });
+            }
+
             var workout = new Workout
             {
-                UserId = dto.UserId,
+                UserId = userId,
                 ExerciseId = dto.ExerciseId
             };
 
@@ -139,7 +166,7 @@ namespace workoutapp_API.controllers
         }
 
         /// <summary>
-        /// Deletes a workout by ID.
+        /// Deletes a workout belonging to the authenticated user.
         /// </summary>
         /// <param name="id">Workout ID</param>
         /// <response code="204">Deleted successfully</response>
@@ -149,13 +176,26 @@ namespace workoutapp_API.controllers
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteWorkoutAsync(int id)
         {
-            var workout = await _context.Workouts.FindAsync(id);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            var workout = await _context.Workouts
+                .FirstOrDefaultAsync(w => w.WorkoutId == id && w.UserId == userId);
+
             if (workout == null)
+            {
                 return NotFound();
+            }
 
             _context.Workouts.Remove(workout);
             await _context.SaveChangesAsync();
-            _memoryCache.Remove($"workout_{id}");
+
+            _memoryCache.Remove($"workout_{userId}_{id}");
+
             return NoContent();
         }
     }
