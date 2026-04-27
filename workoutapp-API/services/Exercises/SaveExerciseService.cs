@@ -4,7 +4,7 @@ using WorkoutApp.API.Models;
 using workoutapp_API.services.Exercises;
 using workoutapp_API.services.External;
 
-namespace WorkoutApp.API.services.Exercises
+namespace workoutapp_API.services.Exercises
 {
     public class SaveExerciseService : ISaveExerciseService
     {
