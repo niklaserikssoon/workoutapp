@@ -1,32 +1,40 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
+using Scalar.AspNetCore;
+using System.Threading.RateLimiting;
+using WorkoutApp.API.Data;
+using WorkoutApp.API.services.Exercises;
 using workoutapp_API.Filters;
 using workoutapp_API.services;
-using Scalar.AspNetCore;
-using WorkoutApp.API.Data;
-using workoutapp_API.services.External;
 using workoutapp_API.services.Exercises;
+using workoutapp_API.services.External;
 
 
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options => 
+{
+    // Custom Action Filters
+    options.Filters.Add<ValidateModelFilter>();
+    options.Filters.Add<PerformanceFilter>();
+});
 
 // Database context
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseSqlServer("Server=localhost\\SQLEXPRESS;Database=WorkoutDb;Trusted_Connection=True;TrustServerCertificate=True;"));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 
-// // OpenAPI with XML comments for documentation
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(options =>
-{
-    var xmlFileName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFileName));
-});
+//// OpenAPI with XML comments for documentation
+//builder.Services.AddEndpointsApiExplorer();
+//builder.Services.AddSwaggerGen(options =>
+//{
+//    var xmlFileName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+//    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFileName));
+//});
 
 
 //  cache
@@ -38,20 +46,28 @@ builder.Services.AddHttpClient<IExternalExercise, ExternalExercise>(client =>
     client.BaseAddress = new Uri("https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/");
 });
 
-// Local exercise service 
+// Local exercise service & save exercise service
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
+builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
 
-
-builder.Services.AddRateLimiter(options =>
+// OpenAPI, single registration with JWT security definition
+builder.Services.AddOpenApi("v1", options =>
 {
-    options.RejectionStatusCode = 429;
-
-    options.AddFixedWindowLimiter("writePolicy", limiterOptions =>
+    options.AddDocumentTransformer((doc, context, ct) =>
     {
-        limiterOptions.PermitLimit = 3; // Allow 3 requests per window
-        limiterOptions.Window = TimeSpan.FromSeconds(10); // 10-second window
-        limiterOptions.QueueProcessingOrder = System.Threading.RateLimiting.QueueProcessingOrder.OldestFirst; 
-        limiterOptions.QueueLimit = 0; // No queuing, reject requests immediately if the limit is reached
+        doc.Components ??= new();
+        doc.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
+        {
+            ["Bearer"] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter your JWT token"
+            }
+        };
+        return Task.CompletedTask;
     });
 });
 
@@ -62,8 +78,12 @@ builder.Services.AddApiVersioning(options =>
     options.DefaultApiVersion = new ApiVersion(1, 0);
     options.ReportApiVersions = true;
     options.ApiVersionReader = new UrlSegmentApiVersionReader();
+})
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
 });
-
 
 // CORS-Policy
 builder.Services.AddCors(options =>
@@ -77,29 +97,41 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Rate Limiting
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter("fixed", limiterOptions =>
+    {
+        limiterOptions.PermitLimit = 20;                                        // max 20 requests
+        limiterOptions.Window = TimeSpan.FromSeconds(30);                       // per 30 seconds
+        limiterOptions.QueueProcessingOrder = QueueProcessingOrder.OldestFirst; //
+        limiterOptions.QueueLimit = 5;                                          // queue up to 5 extra requests
+    });
 
+    options.RejectionStatusCode = 429;                                          // HTTP 429 = Too Many Requests Status Code
+});
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
+    app.MapOpenApi();
+    app.MapScalarApiReference(options =>
+    {
+        options.Title = "Workout API";
+        options.Theme = ScalarTheme.DeepSpace;
+    });
+
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
-
-
-app.UseAuthorization();
-
+app.UseRouting();
 app.UseRateLimiter();
-
-app.MapControllers();
-app.MapScalarApiReference(options => 
-{ 
-    options.WithOpenApiRoutePattern("/swagger/{documentName}/swagger.json");
-});
-
+app.UseCors("AllowFrontend");
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers().RequireRateLimiting("fixed"); // Adds rate limiting globally to all controllers. (Instead of per controller or endpoint)
 
 app.Run();

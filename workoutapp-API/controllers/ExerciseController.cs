@@ -21,11 +21,13 @@ namespace workoutapp_API.controllers
     {
         private readonly IExternalExercise _externalExercise;
         private readonly IExerciseService _exerciseService;
+        private readonly ISaveExerciseService _saveExerciseService;
 
-        public ExerciseController(IExternalExercise externalExercise, IExerciseService exerciseService)
+        public ExerciseController(IExternalExercise externalExercise, IExerciseService exerciseService, ISaveExerciseService saveExerciseService)
         {
             _externalExercise = externalExercise;
             _exerciseService = exerciseService;
+            _saveExerciseService = saveExerciseService;
         }
 
         /// <summary>
@@ -71,6 +73,24 @@ namespace workoutapp_API.controllers
         }
 
         /// <summary>
+        /// Saves an exercise from the external API to the local SQL database.
+        /// </summary>
+        /// <param name="id">External exercise id to save</param>
+        /// <response code="200">Exercise saved successfully</response>
+        /// <response code="404">Exercise not found in external API</response>
+        [HttpPost("save/{id}")]
+        public async Task<IActionResult> SaveExercise(string id)
+        {
+            var savedExercise = await _saveExerciseService.SaveExerciseAsync(id);
+            if (savedExercise == null)
+            {
+                return NotFound(new { Message = $"Exercise with ID '{id}' not found in external API." });
+            }
+            return Ok(savedExercise);
+        }
+
+
+        /// <summary>
         /// Returns all exercises stored in the local SQL database.
         /// </summary>
         /// <response code="200">Exercises retrieved successfully</response>
@@ -88,7 +108,6 @@ namespace workoutapp_API.controllers
         /// <response code="201">Exercise created successfully</response>
         /// <response code="400">Invalid input data</response>
         [HttpPost]
-        [EnableRateLimiting("writePolicy")]
         public async Task<IActionResult> CreateExercise(CreateExerciseDTO dto)
         {
             var exercise = await _exerciseService.CreateExerciseAsync(dto);
@@ -105,7 +124,6 @@ namespace workoutapp_API.controllers
         /// <response code="200">Exercise updated successfully</response>
         /// <response code="404">Exercise not found</response>
         [HttpPut("{id}")]
-        [EnableRateLimiting("writePolicy")]
         public async Task<IActionResult> UpdateExercise(int id, UpdateExerciseDTO dto)
         {
             var updatedExercise = await _exerciseService.UpdateExerciseAsync(id, dto);
@@ -124,7 +142,6 @@ namespace workoutapp_API.controllers
         /// <response code="204">Exercise deleted successfully</response>
         /// <response code="404">Exercise not found</response>
         [HttpDelete("{id}")]
-        [EnableRateLimiting("writePolicy")]
         public async Task<IActionResult> DeleteExercise(int id)
         {
             var deleted = await _exerciseService.DeleteExerciseAsync(id);
