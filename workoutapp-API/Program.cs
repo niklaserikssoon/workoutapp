@@ -41,14 +41,24 @@ builder.Services.AddHttpClient<IExternalExercise, ExternalExercise>(client =>
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
 
-builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
+{
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+});
+
 
 // OpenAPI, single registration with JWT security definition
 builder.Services.AddOpenApi("v1", options =>
 {
+    var xmlFileName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFileName);
+
     options.AddDocumentTransformer((doc, context, ct) =>
     {
         doc.Components ??= new();
+
         doc.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
         {
             ["Bearer"] = new OpenApiSecurityScheme
@@ -60,9 +70,11 @@ builder.Services.AddOpenApi("v1", options =>
                 Description = "Enter your JWT token"
             }
         };
+
         return Task.CompletedTask;
     });
 });
+
 
 // API versioning
 builder.Services.AddApiVersioning(options =>
@@ -146,6 +158,7 @@ if (app.Environment.IsDevelopment())
     {
         options.Title = "Workout API";
         options.Theme = ScalarTheme.DeepSpace;
+
     });
 
     app.UseSwagger();
