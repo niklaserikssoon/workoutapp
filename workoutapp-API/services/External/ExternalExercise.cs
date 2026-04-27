@@ -31,4 +31,10 @@ public class ExternalExercise : IExternalExercise
 
         return exercises;
     }
+
+    public async Task<ExternalExerciseDTO?> GetExerciseByIdAsync(string exerciseId)
+    {
+        var exercises = await GetExercisesAsync();
+        return exercises.FirstOrDefault(e => e.Id == exerciseId);
+    }
 }
