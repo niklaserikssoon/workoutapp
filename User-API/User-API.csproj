@@ -23,4 +23,8 @@
 		<PackageReference Include="Scalar.AspNetCore" Version="1.9.*" />
   </ItemGroup>
 
+	<ItemGroup>
+	  <Folder Include="Repository\" />
+	</ItemGroup>
+
 </Project>

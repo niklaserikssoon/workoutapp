@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using User_API.Data;
 using User_API.DTOs;
 using User_API.Models;
@@ -28,6 +29,7 @@ namespace User_API.Service
             await _context.SaveChangesAsync();
             return user;
         }
+
         public async Task<User?> GetUserByUsernameAsync(string username)
         {
             return await _context.Users
@@ -72,6 +74,23 @@ namespace User_API.Service
             await _context.SaveChangesAsync();
 
             return true;
+        }
+
+        public async Task<IActionResult> GetUserById(int id, GetByIdDTO dto)
+        {
+            var user = await GetUserByIdAsync(id);
+            if (user == null)
+            {
+                return new NotFoundResult();
+            }
+            return new OkObjectResult(new UserResponseDTO
+            {
+                UserId = user.UserId,
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
+            });
         }
     }
 }
