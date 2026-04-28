@@ -1,7 +1,13 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using System.Text;
+using System.Threading.RateLimiting;
 using User_API.Data;
 using User_API.Filters;
 using User_API.Models;
@@ -11,6 +17,7 @@ using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,9 +39,6 @@ builder.Services.AddHttpClient("WorkoutApi", client =>
 
 builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Configure the HTTP request pipeline.
-builder.Services.AddOpenApi("v1");
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -58,6 +62,47 @@ builder.Services.AddCors(options =>
             .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501") // Frontend port
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Authorization", "Content-Type");
+    });
+});
+
+// OpenAPI with JWT security definition
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.AddDocumentTransformer((doc, context, ct) =>
+    {
+        doc.Components ??= new();
+
+        doc.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
+        {
+            ["Bearer"] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter your JWT token"
+            }
+        };
+
+        doc.SecurityRequirements = new List<OpenApiSecurityRequirement>
+        {
+            new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new List<string>()
+                }
+            }
+        };
+
+        return Task.CompletedTask;
     });
 });
 
