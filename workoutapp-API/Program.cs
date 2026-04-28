@@ -100,8 +100,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501", "http://localhost:5500", "http://192.168.1.157:5500")
-            .WithMethods("GET", "POST", "PUT", "DELETE")
+            .WithOrigins(
+                "http://localhost:5501",
+                "http://127.0.0.1:5501",
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://192.168.1.157:5500"
+            )
+            .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type");
     });
 });
