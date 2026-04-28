@@ -49,7 +49,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-// OpenAPI, single registration with JWT security definition
+// OpenAPI with JWT security definition
 builder.Services.AddOpenApi("v1", options =>
 {
     var xmlFileName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
