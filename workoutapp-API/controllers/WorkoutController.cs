@@ -140,10 +140,10 @@ namespace workoutapp_API.controllers
                 return Unauthorized();
             }
 
-            var exerciseExists = await _context.Exercises
-                .AnyAsync(e => e.ExerciseId == dto.ExerciseId);
+            var exercise = await _context.Exercises
+                .FirstOrDefaultAsync(e => e.ExerciseId == dto.ExerciseId);
 
-            if (!exerciseExists)
+            if (exercise == null)
             {
                 return BadRequest(new { Message = "Exercise does not exist." });
             }
@@ -157,11 +157,14 @@ namespace workoutapp_API.controllers
             _context.Workouts.Add(workout);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetWorkoutAsync), new { id = workout.WorkoutId }, new WorkoutDTO
+            return Created($"/api/v1/workouts/{workout.WorkoutId}", new WorkoutDTO
             {
                 WorkoutId = workout.WorkoutId,
                 UserId = workout.UserId,
-                ExerciseId = workout.ExerciseId
+                ExerciseId = workout.ExerciseId,
+                ExerciseName = exercise.ExerciseName,
+                PrimaryMuscle = exercise.PrimaryMuscle
+
             });
         }
 

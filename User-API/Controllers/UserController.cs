@@ -13,7 +13,7 @@ namespace User_API.Controllers
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/[controller]")]
-    
+
     public class UserController : ControllerBase
     {
         private readonly IUserService _userService;
@@ -96,21 +96,15 @@ namespace User_API.Controllers
             var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
             if (!int.TryParse(userIdClaim, out var userId))
-            {
                 return Unauthorized();
-            }
 
             if (id != userId)
-            {
                 return Forbid();
-            }
 
             var user = await _userService.GetUserByIdAsync(userId);
 
             if (user == null)
-            {
                 return NotFound();
-            }
 
             return Ok(new UserResponseDTO
             {
