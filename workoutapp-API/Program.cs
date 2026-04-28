@@ -36,12 +36,13 @@ builder.Services.AddHttpClient("WorkoutApi", client =>
 
 builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
 
-// OpenAPI, single registration with JWT security definition
+// OpenAPI with JWT security definition
 builder.Services.AddOpenApi("v1", options =>
 {
     options.AddDocumentTransformer((doc, context, ct) =>
     {
         doc.Components ??= new();
+
         doc.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
         {
             ["Bearer"] = new OpenApiSecurityScheme
@@ -53,6 +54,25 @@ builder.Services.AddOpenApi("v1", options =>
                 Description = "Enter your JWT token"
             }
         };
+
+        doc.SecurityRequirements = new List<OpenApiSecurityRequirement>
+        {
+            new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new List<string>()
+                }
+            }
+        };
+
         return Task.CompletedTask;
     });
 });
