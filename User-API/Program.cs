@@ -1,16 +1,22 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using System.Text;
+using System.Text;
+using System.Threading.RateLimiting;
 using System.Threading.RateLimiting;
 using User_API.Data;
 using User_API.Filters;
 using User_API.Models;
+using User_API.Repositories;
 using User_API.Service;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -24,6 +30,7 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddHttpClient("WorkoutApi", client =>
 {
@@ -53,6 +60,8 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
+            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501", "http://localhost:3000", "http://192.168.0.36:3000") // Frontend port
+            .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithOrigins(
                 "http://localhost:5501",
                 "http://127.0.0.1:5501",

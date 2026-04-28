@@ -1,18 +1,17 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using User_API.Data;
 using User_API.DTOs;
 using User_API.Models;
+using User_API.Repositories;
 
 namespace User_API.Service
 {
     public class UserService : IUserService
     {
-        private readonly UserDbContext _context;
+        private readonly IUserRepository _userRepository;
 
-        public UserService(UserDbContext context)
+        public UserService(IUserRepository userRepository)
         {
-            _context = context;
+            _userRepository = userRepository;
         }
 
         public async Task<User> CreateUserAsync(CreateUserDTO userCreateDto)
@@ -25,27 +24,30 @@ namespace User_API.Service
                 Email = userCreateDto.Email,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(userCreateDto.Password)
             };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+
+            await _userRepository.AddUserAsync(user);
+
             return user;
         }
 
         public async Task<User?> GetUserByUsernameAsync(string username)
         {
-            return await _context.Users
-                .FirstOrDefaultAsync(u => u.UserName == username);
+            return await _userRepository.GetUserByUsernameAsync(username);
         }
+
         public async Task<User?> GetUserByIdAsync(int id)
         {
-            return await _context.Users.FindAsync(id);
+            return await _userRepository.GetUserByIdAsync(id);
         }
+
         public async Task<IEnumerable<User>> GetAllUsersAsync()
         {
-            return await _context.Users.ToListAsync();
+            return await _userRepository.GetAllUsersAsync();
         }
+
         public async Task<User?> UpdateUserAsync(int id, UpdateUserDTO userUpdateDto)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userRepository.GetUserByIdAsync(id);
 
             if (user == null)
             {
@@ -56,22 +58,21 @@ namespace User_API.Service
             user.LastName = userUpdateDto.LastName;
             user.Email = userUpdateDto.Email;
 
-            await _context.SaveChangesAsync();
+            await _userRepository.UpdateUserAsync(user);
 
             return user;
         }
 
         public async Task<bool> DeleteUserAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
+            var user = await _userRepository.GetUserByIdAsync(id);
 
             if (user == null)
             {
                 return false;
             }
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            await _userRepository.DeleteUserAsync(user);
 
             return true;
         }
@@ -79,10 +80,12 @@ namespace User_API.Service
         public async Task<IActionResult> GetUserById(int id, GetByIdDTO dto)
         {
             var user = await GetUserByIdAsync(id);
+
             if (user == null)
             {
                 return new NotFoundResult();
             }
+
             return new OkObjectResult(new UserResponseDTO
             {
                 UserId = user.UserId,
