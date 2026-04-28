@@ -12,12 +12,6 @@ using User_API.Data;
 using User_API.Filters;
 using User_API.Models;
 using User_API.Service;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
