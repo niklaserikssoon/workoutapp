@@ -12,12 +12,6 @@ using User_API.Data;
 using User_API.Filters;
 using User_API.Models;
 using User_API.Service;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
-
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -59,7 +53,7 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501") // Frontend port
+            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501", "http://localhost:5500", "http://192.168.1.157:5500") // Frontend port
             .WithMethods("GET", "POST", "PUT", "DELETE")
             .WithHeaders("Authorization", "Content-Type");
     });
