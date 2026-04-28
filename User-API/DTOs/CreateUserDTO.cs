@@ -18,6 +18,6 @@ namespace User_API.DTOs
         [StringLength(150)]
         public string Email { get; set; } = null!;
         [Required]
-        public string password { get; set; } = null!;
+        public string Password { get; set; } = null!;
     }
 }

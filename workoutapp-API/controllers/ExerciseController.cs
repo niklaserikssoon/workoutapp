@@ -1,7 +1,6 @@
 ﻿using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using WorkoutApp.API.Services;
 using workoutapp_API.DTOs;
 using workoutapp_API.services;
 
@@ -36,8 +35,8 @@ namespace workoutapp_API.controllers
         /// <param name="page">Page number (default: 1)</param>
         /// <param name="pageSize">Items per page (default: 20)</param>
         /// <response code="200">Success</response>
-        /// <response code="401">Unauthorized</response>
         [HttpGet]
+        [AllowAnonymous] // [AllowAnonymous] replaces <response code="401">Unauthorized</response>
         public async Task<ActionResult<PagedResult<ExternalExerciseDTO>>> GetExercises(
             [FromQuery] string? name,
             [FromQuery] string? level,
@@ -68,6 +67,15 @@ namespace workoutapp_API.controllers
                 TotalPages = (int)Math.Ceiling(total / (double)pageSize)
             });
         }
+
+        /// <summary>
+        /// Saves an exercise from the external API to the local database.
+        /// </summary>
+        /// <param name="id">External exercise ID.</param>
+        /// <response code="200">Exercise saved successfully.</response>
+        /// <response code="401">The user is not authenticated or the token is invalid.</response>
+        /// <response code="404">Exercise not found in the external API.</response>
+        [Authorize]
         [HttpPost("save/{id}")]
         public async Task<IActionResult> SaveExercise(string id)
         {

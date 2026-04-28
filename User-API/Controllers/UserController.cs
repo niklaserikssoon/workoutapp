@@ -1,11 +1,9 @@
 ﻿using Asp.Versioning;
-using Microsoft.AspNetCore.Identity.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authorization;
-using User_API.Data;
 using User_API.DTOs;
-using User_API.Models;
+using User_API.Service;
+using System.Security.Claims;
 
 namespace User_API.Controllers
 {
@@ -18,11 +16,13 @@ namespace User_API.Controllers
     
     public class UserController : ControllerBase
     {
-        private readonly UserDbContext _context;
+        private readonly IUserService _userService;
+        private readonly ITokenService _tokenService;
 
-        public UserController(UserDbContext context)
+        public UserController(IUserService userService, ITokenService tokenService)
         {
-            _context = context;
+            _userService = userService;
+            _tokenService = tokenService;
         }
 
         /// <summary>
@@ -34,24 +34,15 @@ namespace User_API.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> CreateUserAsync([FromBody] CreateUserDTO userCreateDto)
         {
-            var user = new User
-            {
-                FirstName = userCreateDto.FirstName,
-                LastName = userCreateDto.LastName,
-                UserName = userCreateDto.UserName,
-                Email = userCreateDto.Email,
-                PasswordHash = userCreateDto.password
-            };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
+            var user = await _userService.CreateUserAsync(userCreateDto);
 
-            return Ok(new
+            return Ok(new UserResponseDTO
             {
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.FirstName,
-                user.LastName
+                UserId = user.UserId,
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
             });
         }
 
@@ -59,28 +50,36 @@ namespace User_API.Controllers
         /// Authenticates a user with username and password.
         /// </summary>
         /// <param name="dto">Login credentials</param>
-        /// <response code="200">Login successful, returns user info</response>
+        /// <response code="200">Login successful, returns JWT token and user info.</response>
         /// <response code="400">Missing credentials</response>
         /// <response code="401">Invalid username or password</response>
         [HttpPost("login")]
-        public async Task<IActionResult> Login([FromBody] LoginDto dto)
+        public async Task<IActionResult> Login([FromBody] LoginDTO dto)
         {
             if (dto == null || string.IsNullOrWhiteSpace(dto.UserName) || string.IsNullOrWhiteSpace(dto.Password))
-                return BadRequest();
+                return BadRequest(new { message = "Username and password are required." });
 
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.UserName == dto.UserName);
+            var user = await _userService.GetUserByUsernameAsync(dto.UserName);
 
-            if (user == null || user.PasswordHash != dto.Password)
+            if (user == null)
                 return Unauthorized(new { message = "Wrong username or password." });
 
-            return Ok(new
+            var passwordIsValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
+
+            if (!passwordIsValid)
+                return Unauthorized(new { message = "Wrong username or password." });
+
+            var token = _tokenService.CreateToken(user);
+
+            return Ok(new LoginResponseDTO
             {
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.FirstName,
-                user.LastName
+                Token = token,
+                ExpiresAtUtc = DateTime.UtcNow.AddHours(1),
+                UserId = user.UserId,
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
             });
         }
 
@@ -90,20 +89,36 @@ namespace User_API.Controllers
         /// <param name="id">The user ID</param>
         /// <response code="200">Returns the user</response>
         /// <response code="404">User not found</response>
+        [Authorize]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetUserAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-                return NotFound();
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            return Ok(new
+            if (!int.TryParse(userIdClaim, out var userId))
             {
-                user.UserId,
-                user.UserName,
-                user.Email,
-                user.FirstName,
-                user.LastName
+                return Unauthorized();
+            }
+
+            if (id != userId)
+            {
+                return Forbid();
+            }
+
+            var user = await _userService.GetUserByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound();
+            }
+
+            return Ok(new UserResponseDTO
+            {
+                UserId = user.UserId,
+                UserName = user.UserName,
+                Email = user.Email,
+                FirstName = user.FirstName,
+                LastName = user.LastName
             });
         }
 
@@ -114,20 +129,32 @@ namespace User_API.Controllers
         /// <param name="dto">Updated user details</param>
         /// <response code="204">Update successful</response>
         /// <response code="400">Invalid input</response>
+        /// <response code="401">Unauthorized.</response>
+        /// <response code="403">Forbidden - user can only update their own account.</response>
         /// <response code="404">User not found</response>
         [Authorize]
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateUserAsync(int id, [FromBody] UpdateUserDTO dto)
         {
-            var user = await _context.Users.FindAsync(id);
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            if (id != userId)
+            {
+                return Forbid();
+            }
+
+            var user = await _userService.UpdateUserAsync(userId, dto);
+
             if (user == null)
+            {
                 return NotFound();
+            }
 
-            user.FirstName = dto.FirstName;
-            user.LastName = dto.LastName;
-            user.Email = dto.Email;
-
-            await _context.SaveChangesAsync();
             return NoContent();
         }
 
@@ -136,17 +163,32 @@ namespace User_API.Controllers
         /// </summary>
         /// <param name="id">The user ID</param>
         /// <response code="204">Deletion successful</response>
+        /// <response code="401">Unauthorized.</response>
+        /// <response code="403">Forbidden - user can only delete their own account.</response>
         /// <response code="404">User not found</response>
         [Authorize]
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUserAsync(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
-                return NotFound();
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
 
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
+            if (!int.TryParse(userIdClaim, out var userId))
+            {
+                return Unauthorized();
+            }
+
+            if (id != userId)
+            {
+                return Forbid();
+            }
+
+            var deleted = await _userService.DeleteUserAsync(userId);
+
+            if (!deleted)
+            {
+                return NotFound();
+            }
+
             return NoContent();
         }
     }

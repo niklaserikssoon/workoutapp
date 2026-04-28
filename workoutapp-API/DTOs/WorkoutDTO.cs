@@ -14,9 +14,6 @@ namespace workoutapp_API.DTOs
     public class CreateWorkoutDTO
     {
         [Required]
-        public int UserId { get; set; }
-
-        [Required]
         public int ExerciseId { get; set; }
     }
 }
