@@ -1,27 +1,24 @@
-﻿using Microsoft.EntityFrameworkCore;
-using User_API.Data;
+﻿using Moq;
 using User_API.DTOs;
 using User_API.Models;
+using User_API.Repositories;
 using User_API.Service;
 
 namespace WorkoutApp.Tests
 {
     public class UserServiceTests
     {
-        private UserDbContext CreateInMemoryContext()
+        private Mock<IUserRepository> CreateMockRepository()
         {
-            var options = new DbContextOptionsBuilder<UserDbContext>()
-                .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
-                .Options;
-            return new UserDbContext(options);
+            return new Mock<IUserRepository>();
         }
 
         [Fact]
         public async Task CreateUserAsync_ValidDto_ReturnsUser()
         {
             // Arrange
-            using var context = CreateInMemoryContext();
-            var service = new UserService(context);
+            var mockRepo = CreateMockRepository();
+            var service = new UserService(mockRepo.Object);
             var dto = new CreateUserDTO
             {
                 FirstName = "Jordan",
@@ -30,6 +27,9 @@ namespace WorkoutApp.Tests
                 Email = "jordan@test.com",
                 Password = "Test.1234"
             };
+
+            mockRepo.Setup(r => r.AddUserAsync(It.IsAny<User>()))
+                .Returns(Task.CompletedTask);
 
             // Act
             var result = await service.CreateUserAsync(dto);
@@ -41,11 +41,11 @@ namespace WorkoutApp.Tests
         }
 
         [Fact]
-        public async Task GetUserByUsernameAsync_ExistingUser_ReturnsUser()
+        public async Task GetUserByIdAsync_ExistingUser_ReturnsUser()
         {
             // Arrange
-            using var context = CreateInMemoryContext();
-            context.Users.Add(new User
+            var mockRepo = CreateMockRepository();
+            var user = new User
             {
                 UserId = 1,
                 FirstName = "Jordan",
@@ -53,10 +53,12 @@ namespace WorkoutApp.Tests
                 UserName = "jfoose",
                 Email = "jordan@test.com",
                 PasswordHash = "hashedpassword"
-            });
-            await context.SaveChangesAsync();
+            };
 
-            var service = new UserService(context);
+            mockRepo.Setup(r => r.GetUserByIdAsync(1))
+                .ReturnsAsync(user);
+
+            var service = new UserService(mockRepo.Object);
 
             // Act
             var result = await service.GetUserByIdAsync(1);
@@ -67,11 +69,28 @@ namespace WorkoutApp.Tests
         }
 
         [Fact]
+        public async Task GetUserByUsernameAsync_NonExistentUser_ReturnsNull()
+        {
+            // Arrange
+            var mockRepo = CreateMockRepository();
+            mockRepo.Setup(r => r.GetUserByUsernameAsync("nobody"))
+                .ReturnsAsync((User?)null);
+
+            var service = new UserService(mockRepo.Object);
+
+            // Act
+            var result = await service.GetUserByUsernameAsync("nobody");
+
+            // Assert
+            Assert.Null(result);
+        }
+
+        [Fact]
         public async Task DeleteUserAsync_ExistingUser_ReturnsTrue()
         {
             // Arrange
-            using var context = CreateInMemoryContext();
-            context.Users.Add(new User
+            var mockRepo = CreateMockRepository();
+            var user = new User
             {
                 UserId = 1,
                 FirstName = "Jordan",
@@ -79,10 +98,14 @@ namespace WorkoutApp.Tests
                 UserName = "jfoose",
                 Email = "jordan@test.com",
                 PasswordHash = "hashedpassword"
-            });
-            await context.SaveChangesAsync();
+            };
 
-            var service = new UserService(context);
+            mockRepo.Setup(r => r.GetUserByIdAsync(1))
+                .ReturnsAsync(user);
+            mockRepo.Setup(r => r.DeleteUserAsync(user))
+                .Returns(Task.CompletedTask);
+
+            var service = new UserService(mockRepo.Object);
 
             // Act
             var result = await service.DeleteUserAsync(1);
@@ -95,8 +118,11 @@ namespace WorkoutApp.Tests
         public async Task DeleteUserAsync_NonExistentUser_ReturnsFalse()
         {
             // Arrange
-            using var context = CreateInMemoryContext();
-            var service = new UserService(context);
+            var mockRepo = CreateMockRepository();
+            mockRepo.Setup(r => r.GetUserByIdAsync(999))
+                .ReturnsAsync((User?)null);
+
+            var service = new UserService(mockRepo.Object);
 
             // Act
             var result = await service.DeleteUserAsync(999);
@@ -109,8 +135,8 @@ namespace WorkoutApp.Tests
         public async Task UpdateUserAsync_ExistingUser_UpdatesAndReturnsUser()
         {
             // Arrange
-            using var context = CreateInMemoryContext();
-            context.Users.Add(new User
+            var mockRepo = CreateMockRepository();
+            var user = new User
             {
                 UserId = 1,
                 FirstName = "Jordan",
@@ -118,10 +144,14 @@ namespace WorkoutApp.Tests
                 UserName = "jfoose",
                 Email = "jordan@test.com",
                 PasswordHash = "hashedpassword"
-            });
-            await context.SaveChangesAsync();
+            };
 
-            var service = new UserService(context);
+            mockRepo.Setup(r => r.GetUserByIdAsync(1))
+                .ReturnsAsync(user);
+            mockRepo.Setup(r => r.UpdateUserAsync(It.IsAny<User>()))
+                .Returns(Task.CompletedTask);
+
+            var service = new UserService(mockRepo.Object);
             var updateDto = new UpdateUserDTO
             {
                 FirstName = "Jordan Updated",

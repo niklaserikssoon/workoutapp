@@ -2,9 +2,9 @@
 using Moq;
 using WorkoutApp.API.Data;
 using WorkoutApp.API.Models;
-using WorkoutApp.API.Services;
+using workoutapp_API.services.Exercises;
 using workoutapp_API.DTOs;
-using workoutapp_API.services;
+using workoutapp_API.services.External;
 
 namespace WorkoutApp.Tests
 {
