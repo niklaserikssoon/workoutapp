@@ -1,16 +1,23 @@
 using Asp.Versioning;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
+using System.Text;
+using System.Text;
+using System.Threading.RateLimiting;
+using System.Threading.RateLimiting;
 using User_API.Data;
 using User_API.Filters;
 using User_API.Models;
+using User_API.Repositories;
 using User_API.Service;
-using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +30,7 @@ builder.Services.AddControllers(options =>
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<ITokenService, TokenService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
 
 builder.Services.AddHttpClient("WorkoutApi", client =>
 {
@@ -32,9 +40,6 @@ builder.Services.AddHttpClient("WorkoutApi", client =>
 
 builder.Services.AddDbContext<UserDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-// Configure the HTTP request pipeline.
-builder.Services.AddOpenApi("v1");
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -55,9 +60,58 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501") // Frontend port
+            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501", "http://localhost:3000", "http://192.168.0.36:3000") // Frontend port
             .WithMethods("GET", "POST", "PUT", "DELETE")
+            .WithOrigins(
+                "http://localhost:5501",
+                "http://127.0.0.1:5501",
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://192.168.1.157:5500"
+            )
+            .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type");
+    });
+});
+
+// OpenAPI with JWT security definition
+builder.Services.AddOpenApi("v1", options =>
+{
+    options.AddDocumentTransformer((doc, context, ct) =>
+    {
+        doc.Components ??= new();
+
+        doc.Components.SecuritySchemes = new Dictionary<string, OpenApiSecurityScheme>
+        {
+            ["Bearer"] = new OpenApiSecurityScheme
+            {
+                Type = SecuritySchemeType.Http,
+                Scheme = "bearer",
+                BearerFormat = "JWT",
+                In = ParameterLocation.Header,
+                Description = "Enter your JWT token"
+            }
+        };
+
+        doc.SecurityRequirements = new List<OpenApiSecurityRequirement>
+        {
+            new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new List<string>()
+                }
+            }
+        };
+
+        return Task.CompletedTask;
     });
 });
 

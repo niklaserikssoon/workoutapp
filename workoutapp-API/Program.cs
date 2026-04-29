@@ -49,7 +49,7 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 
-// OpenAPI, single registration with JWT security definition
+// OpenAPI with JWT security definition
 builder.Services.AddOpenApi("v1", options =>
 {
     var xmlFileName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
@@ -68,6 +68,24 @@ builder.Services.AddOpenApi("v1", options =>
                 BearerFormat = "JWT",
                 In = ParameterLocation.Header,
                 Description = "Enter your JWT token"
+            }
+        };
+
+        doc.SecurityRequirements = new List<OpenApiSecurityRequirement>
+        {
+            new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference
+                        {
+                            Type = ReferenceType.SecurityScheme,
+                            Id = "Bearer"
+                        }
+                    },
+                    new List<string>()
+                }
             }
         };
 
@@ -96,8 +114,14 @@ builder.Services.AddCors(options =>
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501")  //Frontend port
-            .WithMethods("GET", "POST", "PUT", "DELETE")
+            .WithOrigins(
+                "http://localhost:5501",
+                "http://127.0.0.1:5501",
+                "http://localhost:5500",
+                "http://127.0.0.1:5500",
+                "http://192.168.1.157:5500"
+            )
+            .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type");
     });
 });
