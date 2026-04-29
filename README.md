@@ -9,7 +9,7 @@ Supports workout creation, user management and exercise handling
 .NET (ASP.NET Core Web API)
 Entity Framework Core
 SQL Database (based on ER diagram)
-Swagger / Scalar (API documentation)
+Scalar (API documentation)
 JWT Authentication
 GitHub Actions (CI/CD)
 Notion (project management & documentation)
@@ -26,7 +26,7 @@ ER Diagram used → implemented as SQL database
 📊 Controllers (Overview)
 UserController
 Handles users
-Login, profile, admin actions
+Register Login, and manage account
 
 WorkoutController
 Manages workouts
