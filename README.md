@@ -114,7 +114,6 @@ Custom filters implemented
 
 🔐 Security
 JWT Authentication
-Role-based access (User / Admin)
 CORS policy configured
 Input validation
 
