@@ -1,9 +1,10 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using WorkoutApp.API.Data;
 using WorkoutApp.API.Models;
-using workoutapp_API.services;
+using workoutapp_API.services.Exercises;
+using workoutapp_API.services.External;
 
-namespace WorkoutApp.API.Services
+namespace workoutapp_API.services.Exercises
 {
     public class SaveExerciseService : ISaveExerciseService
     {

@@ -3,45 +3,58 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using WorkoutApp.API.Data;
-using WorkoutApp.API.Services;
-using workoutapp_API.Filters;
 using workoutapp_API.services;
+using workoutapp_API.Filters;
 using Microsoft.AspNetCore.RateLimiting;
-using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using System.Threading.RateLimiting;
+using workoutapp_API.services.Exercises;
+using workoutapp_API.services.External;
 using System.Text;
+
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddControllers(options =>
+// Add services to the container.
+builder.Services.AddControllers(options => 
 {
     // Custom Action Filters
     options.Filters.Add<ValidateModelFilter>();
     options.Filters.Add<PerformanceFilter>();
 });
 
+// Database context
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Memory cache + typed HTTP client
+//  cache
 builder.Services.AddMemoryCache();
-builder.Services.AddHttpClient<IExternalExercise, ExerciseService>(client =>
+
+// External exercises (HTTP client)
+builder.Services.AddHttpClient<IExternalExercise, ExternalExercise>(client =>
 {
     client.BaseAddress = new Uri("https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/");
 });
 
-builder.Services.AddHttpClient("WorkoutApi", client =>
+// Local exercise service & save exercise service
+builder.Services.AddScoped<IExerciseService, ExerciseService>();
+builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(options =>
 {
-    var baseUrl = builder.Configuration["ServiceUrls:WorkoutApi"];
-    client.BaseAddress = new Uri(baseUrl!);
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 });
 
-builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
 
 // OpenAPI with JWT security definition
 builder.Services.AddOpenApi("v1", options =>
 {
+    var xmlFileName = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFileName);
+
     options.AddDocumentTransformer((doc, context, ct) =>
     {
         doc.Components ??= new();
@@ -79,6 +92,7 @@ builder.Services.AddOpenApi("v1", options =>
         return Task.CompletedTask;
     });
 });
+
 
 // API versioning
 builder.Services.AddApiVersioning(options =>
@@ -168,7 +182,11 @@ if (app.Environment.IsDevelopment())
     {
         options.Title = "Workout API";
         options.Theme = ScalarTheme.DeepSpace;
+
     });
+
+    app.UseSwagger();
+    app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();

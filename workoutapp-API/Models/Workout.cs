@@ -16,4 +16,5 @@ public class Workout
 
     [ForeignKey(nameof(ExerciseId))]
     public virtual Exercise Exercise { get; set; } = null!;
+
 }

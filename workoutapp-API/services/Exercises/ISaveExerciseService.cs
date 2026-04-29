@@ -1,6 +1,6 @@
 ﻿using WorkoutApp.API.Models;
 
-namespace workoutapp_API.services
+namespace workoutapp_API.services.Exercises
 {
     public interface ISaveExerciseService
     {
