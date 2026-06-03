@@ -44,7 +44,7 @@ builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
 
 // AI plan service
-builder.Services.AddScoped<IAiPlanService, AiPlanService>();
+builder.Services.AddSingleton<IAiPlanService, AiPlanService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -192,7 +192,7 @@ if (app.Environment.IsDevelopment())
 
 // Global exception handling middleware
 app.UseMiddleware<ExceptionMiddleware>();
-app.UseHttpLogging();
+
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseRateLimiter();
