@@ -9,7 +9,7 @@ namespace workoutapp_API.DTOs
         public string Goal { get; set; } = string.Empty;
 
         [Required]
-        [RegularExpression("^(nybörjare|medel|avancerad)$", ErrorMessage = "FitnessLevel must be: nybörjare, medel, or avancerad")]
+        [StringLength(100)]
         public string FitnessLevel { get; set; } = string.Empty;
 
         [Range(1, 7)]
