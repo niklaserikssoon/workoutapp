@@ -27,14 +27,14 @@ namespace workoutapp_API.services.AI
             var equipment = string.IsNullOrWhiteSpace(request.Equipment) ? "valfri utrustning" : request.Equipment;
 
             var prompt = $"""
-                Du är en erfaren personlig tränare. Skapa ett träningsschema baserat på följande:
-                - Mål: {request.Goal}
-                - Nivå: {request.FitnessLevel}
-                - Träningsdagar per vecka: {request.DaysPerWeek}
-                - Utrustning: {equipment}
+                you're an experienced personal trainer. Create a workout plan based on the following:
+                - Goals: {request.Goal}
+                - Level: {request.FitnessLevel}
+                - Days per week: {request.DaysPerWeek}
+                - Equipment: {equipment}
 
-                Svara med ett tydligt veckoschema. För varje träningsdag, lista övningar med set och reps.
-                Håll svaret koncist och strukturerat. Svara på på språket angivet i request fältet.
+                Respond with a clear weekly schedule. For each workout day, list exercises with sets and reps.
+                Keep the response concise and structured. Respond in the language specified in the request.goal field.
                 """;
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
