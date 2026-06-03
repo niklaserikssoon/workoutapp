@@ -34,7 +34,7 @@ namespace workoutapp_API.services.AI
                 - Utrustning: {equipment}
 
                 Svara med ett tydligt veckoschema. För varje träningsdag, lista övningar med set och reps.
-                Håll svaret koncist och strukturerat. Svara på svenska.
+                Håll svaret koncist och strukturerat. Svara på på språket angivet i request fältet.
                 """;
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
