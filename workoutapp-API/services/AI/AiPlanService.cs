@@ -28,15 +28,16 @@ namespace workoutapp_API.services.AI
 
             // Construct the prompt for the AI model
             var prompt = $"""
-                you're an experienced personal trainer. Create a workout plan based on the following:
-                - Goals: {request.Goal}
-                - Level: {request.FitnessLevel}
-                - Days per week: {request.DaysPerWeek}
-                - Equipment: {equipment}
+                  You are an experienced personal trainer. Create a workout plan based on the following:
+                  - Goals: {request.Goal}
+                  - Level: {request.FitnessLevel}
+                  - Days per week: {request.DaysPerWeek}
+                  - Equipment: {equipment}
 
-                Respond with a clear weekly schedule. For each workout day, list exercises with sets and reps.
-                Keep the response concise and structured. Respond in the language specified in the request.goal field.
-                """;
+                  Respond with a clear weekly schedule. For each workout day, list exercises with sets and reps.
+                  Keep the response concise and structured.
+                  IMPORTANT: Detect the language of the Goals field and respond in that same language.
+                  """;
 
             using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(10));
 
