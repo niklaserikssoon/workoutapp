@@ -192,6 +192,7 @@ if (app.Environment.IsDevelopment())
 
 // Global exception handling middleware
 app.UseMiddleware<ExceptionMiddleware>();
+app.UseHttpLogging();
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseRateLimiter();
