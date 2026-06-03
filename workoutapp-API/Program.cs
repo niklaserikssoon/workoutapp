@@ -28,7 +28,7 @@ builder.Services.AddControllers(options =>
 
 // Database context
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
 
 //  cache
 builder.Services.AddMemoryCache();
@@ -114,19 +114,13 @@ builder.Services.AddApiVersioning(options =>
 });
 
 // CORS-Policy
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5501",
-                "http://127.0.0.1:5501",
-                "http://localhost:5500",
-                "http://127.0.0.1:5500",
-                "http://192.168.1.157:5500",
-                "http://localhost:3000"
-            )
+            .WithOrigins(allowedOrigins)
             .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type");
     });
