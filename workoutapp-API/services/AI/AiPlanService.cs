@@ -26,6 +26,7 @@ namespace workoutapp_API.services.AI
         {
             var equipment = string.IsNullOrWhiteSpace(request.Equipment) ? "valfri utrustning" : request.Equipment;
 
+            // Construct the prompt for the AI model
             var prompt = $"""
                 you're an experienced personal trainer. Create a workout plan based on the following:
                 - Goals: {request.Goal}
