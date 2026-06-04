@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WorkoutApp.API.Models;
 
@@ -11,10 +10,7 @@ public class Workout
     [Required]
     public int UserId { get; set; }
 
-    [Required]
-    public int ExerciseId { get; set; }
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
-    [ForeignKey(nameof(ExerciseId))]
-    public virtual Exercise Exercise { get; set; } = null!;
-
+    public virtual ICollection<Exercise> Exercises { get; set; } = new List<Exercise>();
 }

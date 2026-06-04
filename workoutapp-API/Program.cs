@@ -13,6 +13,7 @@ using workoutapp_API.ExceptionMiddleware;
 using workoutapp_API.services.AI;
 using workoutapp_API.services.Exercises;
 using workoutapp_API.services.External;
+using workoutapp_API.services.Workouts;
 using System.Text;
 
 
@@ -42,9 +43,10 @@ builder.Services.AddHttpClient<IExternalExercise, ExternalExercise>(client =>
 // Local exercise service & save exercise service
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
+builder.Services.AddScoped<IWorkoutService, WorkoutService>();
 
 // AI plan service
-builder.Services.AddScoped<IAiPlanService, AiPlanService>();
+builder.Services.AddSingleton<IAiPlanService, AiPlanService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -192,6 +194,7 @@ if (app.Environment.IsDevelopment())
 
 // Global exception handling middleware
 app.UseMiddleware<ExceptionMiddleware>();
+
 app.UseHttpsRedirection();
 app.UseRouting();
 app.UseRateLimiter();
