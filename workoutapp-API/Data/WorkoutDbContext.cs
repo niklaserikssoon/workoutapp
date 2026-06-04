@@ -27,11 +27,9 @@ public class WorkoutDbContext : DbContext
         {
             entity.HasKey(e => e.WorkoutId).HasName("PK__Workouts__E1C42A0158B09245");
 
-            entity.HasOne(d => d.Exercise)
-                  .WithMany(p => p.Workouts)
-                  .HasForeignKey(d => d.ExerciseId)
-                  .OnDelete(DeleteBehavior.ClientSetNull)
-                  .HasConstraintName("FK_Workouts_Exercises");
+            entity.HasMany(w => w.Exercises)
+                  .WithMany(e => e.Workouts)
+                  .UsingEntity(j => j.ToTable("WorkoutExercises"));
         });
 
         base.OnModelCreating(modelBuilder);
