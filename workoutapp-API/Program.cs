@@ -11,6 +11,7 @@ using Microsoft.IdentityModel.Tokens;
 using System.Threading.RateLimiting;
 using workoutapp_API.ExceptionMiddleware;
 using workoutapp_API.services.AI;
+using workoutapp_API.services.Catalog;
 using workoutapp_API.services.Exercises;
 using workoutapp_API.services.External;
 using workoutapp_API.services.Workouts;
@@ -43,6 +44,8 @@ builder.Services.AddHttpClient<IExternalExercise, ExternalExercise>(client =>
 // Local exercise service & save exercise service
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
+builder.Services.AddScoped<IExerciseCatalogSeedService, ExerciseCatalogSeedService>();
+builder.Services.AddScoped<IExerciseCatalogService, ExerciseCatalogService>();
 builder.Services.AddScoped<IWorkoutService, WorkoutService>();
 
 // AI plan service
