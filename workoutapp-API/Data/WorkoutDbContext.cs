@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using WorkoutApp.API.Models;
 
 namespace WorkoutApp.API.Data;
@@ -12,6 +13,7 @@ public class WorkoutDbContext : DbContext
 
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<Workout> Workouts => Set<Workout>();
+    public DbSet<ExerciseCatalog> ExerciseCatalog => Set<ExerciseCatalog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +32,47 @@ public class WorkoutDbContext : DbContext
             entity.HasMany(w => w.Exercises)
                   .WithMany(e => e.Workouts)
                   .UsingEntity(j => j.ToTable("WorkoutExercises"));
+
+            entity.HasMany(w => w.CatalogExercises)
+                  .WithMany(e => e.Workouts)
+                  .UsingEntity(j => j.ToTable("WorkoutCatalogExercises"));
+        });
+
+        modelBuilder.Entity<ExerciseCatalog>(entity =>
+        {
+            entity.ToTable("Exercise");
+
+            entity.HasKey(e => e.Id);
+
+            var jsonOptions = new JsonSerializerOptions();
+
+            entity.Property(e => e.PrimaryMuscles)
+                .HasConversion(
+                    v => JsonSerializer.Serialize(v, jsonOptions),
+                    v => JsonSerializer.Deserialize<List<string>>(v, jsonOptions) ?? new List<string>()
+                )
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property(e => e.SecondaryMuscles)
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, jsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<List<string>>(v, jsonOptions)
+                )
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property(e => e.Instructions)
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, jsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<List<string>>(v, jsonOptions)
+                )
+                .HasColumnType("nvarchar(max)");
+
+            entity.Property(e => e.Images)
+                .HasConversion(
+                    v => v == null ? null : JsonSerializer.Serialize(v, jsonOptions),
+                    v => v == null ? null : JsonSerializer.Deserialize<List<string>>(v, jsonOptions)
+                )
+                .HasColumnType("nvarchar(max)");
         });
 
         base.OnModelCreating(modelBuilder);
