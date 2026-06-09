@@ -49,7 +49,7 @@ builder.Services.AddScoped<IExerciseCatalogService, ExerciseCatalogService>();
 builder.Services.AddScoped<IWorkoutService, WorkoutService>();
 
 // AI plan service
-builder.Services.AddSingleton<IAiPlanService, AiPlanService>();
+builder.Services.AddScoped<IAiPlanService, AiPlanService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>

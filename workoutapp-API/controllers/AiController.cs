@@ -1,14 +1,12 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Security.Claims;
 using workoutapp_API.DTOs;
 using workoutapp_API.services.AI;
 
 namespace workoutapp_API.controllers
 {
-    /// <summary>
-    /// AI-driven features.
-    /// </summary>
     [ApiController]
     [ApiVersion("1.0")]
     [Route("api/v{version:apiVersion}/ai")]
@@ -22,21 +20,18 @@ namespace workoutapp_API.controllers
         }
 
         /// <summary>
-        /// Generates a personalized workout plan using AI.
+        /// Generates a personalized workout plan using AI and saves it.
         /// </summary>
-        /// <param name="request">User goals, fitness level, days per week and available equipment.</param>
-        /// <response code="200">Returns the generated plan</response>
-        /// <response code="400">Invalid input</response>
-        /// <response code="401">Unauthorized</response>
-        /// <response code="502">AI service returned an unexpected error</response>
-        /// <response code="503">AI service timed out</response>
         [Authorize]
         [HttpPost("generate-plan")]
         public async Task<ActionResult<GeneratePlanResponseDTO>> GeneratePlanAsync([FromBody] GeneratePlanRequestDTO request)
         {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
             try
             {
-                var result = await _aiPlanService.GeneratePlanAsync(request);
+                var result = await _aiPlanService.GeneratePlanAsync(request, userId.Value);
                 return Ok(result);
             }
             catch (OperationCanceledException)
@@ -47,6 +42,42 @@ namespace workoutapp_API.controllers
             {
                 return StatusCode(502, new { Message = "AI service is currently unavailable. Please try again later." });
             }
+        }
+
+        /// <summary>
+        /// Returns all AI-generated plans for the authenticated user.
+        /// </summary>
+        [Authorize]
+        [HttpGet("plans")]
+        public async Task<ActionResult<List<GeneratePlanResponseDTO>>> GetPlansAsync()
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var plans = await _aiPlanService.GetPlansAsync(userId.Value);
+            return Ok(plans);
+        }
+
+        /// <summary>
+        /// Returns a single AI-generated plan by ID.
+        /// </summary>
+        [Authorize]
+        [HttpGet("plans/{id}")]
+        public async Task<ActionResult<GeneratePlanResponseDTO>> GetPlanAsync(int id)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var plan = await _aiPlanService.GetPlanAsync(id, userId.Value);
+            if (plan == null) return NotFound();
+
+            return Ok(plan);
+        }
+
+        private int? GetUserId()
+        {
+            var claim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return int.TryParse(claim, out var id) ? id : null;
         }
     }
 }
