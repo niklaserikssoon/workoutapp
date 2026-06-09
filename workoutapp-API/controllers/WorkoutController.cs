@@ -84,6 +84,32 @@ namespace workoutapp_API.controllers
         }
 
         /// <summary>
+        /// Adds an existing exercise to an existing workout belonging to the authenticated user.
+        /// </summary>
+        /// <param name="workoutId">Workout ID</param>
+        /// <param name="exerciseId">Local exercise ID</param>
+        /// <response code="204">Exercise added successfully</response>
+        /// <response code="401">Unauthorized</response>
+        /// <response code="404">Workout or exercise not found</response>
+        [Authorize]
+        [HttpPost("{workoutId}/catalog-exercises/{catalogExerciseId}")]
+        public async Task<IActionResult> AddCatalogExerciseToWorkoutAsync(int workoutId, string catalogExerciseId)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var added = await _workoutService.AddCatalogExerciseToWorkoutAsync(
+                workoutId,
+                catalogExerciseId,
+                userId.Value
+            );
+
+            if (!added) return NotFound(new { Message = "Workout or catalog exercise not found" });
+
+            return NoContent();
+        }
+
+        /// <summary>
         /// Deletes a workout belonging to the authenticated user.
         /// </summary>
         /// <param name="id">Workout ID</param>
