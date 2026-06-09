@@ -81,6 +81,32 @@ namespace workoutapp_API.services.Workouts
             return true;
         }
 
+        // Adds an exercise from the catalog to a user's workout if both exist and the exercise is not already added
+        public async Task<bool> AddCatalogExerciseToWorkoutAsync(int workoutId, string catalogExerciseId, int userId)
+        {
+            var workout = await _context.Workouts
+                .Include(w => w.CatalogExercises)
+                .FirstOrDefaultAsync(w => w.WorkoutId == workoutId && w.UserId == userId);
+
+            if (workout == null) return false;
+
+            var catalogExercise = await _context.ExerciseCatalog
+                .FirstOrDefaultAsync(e => e.Id == catalogExerciseId);
+
+            if (catalogExercise == null) return false;
+
+            var alreadyExists = workout.CatalogExercises
+                .Any(e => e.Id == catalogExerciseId);
+
+            if (!alreadyExists)
+            {
+                workout.CatalogExercises.Add(catalogExercise);
+                await _context.SaveChangesAsync();
+            }
+
+            return true;
+        }
+
         // update workout by id, but only if it belongs to the user. The only thing that can be updated is the list of exercises
         private static WorkoutDTO ToDTO(Workout w) => new()
         {
