@@ -181,6 +181,16 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+    if (!context.ExerciseCatalog.Any())
+    {
+        var seedService = scope.ServiceProvider.GetRequiredService<IExerciseCatalogSeedService>();
+        await seedService.SeedFromExternalApiAsync();
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
