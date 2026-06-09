@@ -15,11 +15,11 @@ namespace workoutapp_API.services.Workouts
             _context = context;
         }
 
-        // get all workouts for a user, ordered by created date descending
         public async Task<List<WorkoutDTO>> GetWorkoutsAsync(int userId)
         {
             var workouts = await _context.Workouts
                 .Include(w => w.Exercises)
+                .Include(w => w.CatalogExercises)
                 .Where(w => w.UserId == userId)
                 .OrderByDescending(w => w.CreatedAt)
                 .ToListAsync();
@@ -27,17 +27,16 @@ namespace workoutapp_API.services.Workouts
             return workouts.Select(ToDTO).ToList();
         }
 
-        // get workout by id, but only if it belongs to the user
         public async Task<WorkoutDTO?> GetWorkoutAsync(int id, int userId)
         {
             var workout = await _context.Workouts
                 .Include(w => w.Exercises)
+                .Include(w => w.CatalogExercises)
                 .FirstOrDefaultAsync(w => w.WorkoutId == id && w.UserId == userId);
 
             return workout == null ? null : ToDTO(workout);
         }
 
-        // create workout by providing a list of exercise ids, and the user id
         public async Task<WorkoutDTO> CreateWorkoutAsync(CreateWorkoutDTO dto, int userId)
         {
             var exercises = await _context.Exercises
@@ -45,12 +44,20 @@ namespace workoutapp_API.services.Workouts
                 .ToListAsync();
 
             if (exercises.Count != dto.ExerciseIds.Count)
-                throw new KeyNotFoundException("One or more exercises not found.");
+                throw new KeyNotFoundException("One or more custom exercises not found.");
+
+            var catalogExercises = await _context.ExerciseCatalog
+                .Where(e => dto.CatalogExerciseIds.Contains(e.Id))
+                .ToListAsync();
+
+            if (catalogExercises.Count != dto.CatalogExerciseIds.Count)
+                throw new KeyNotFoundException("One or more catalog exercises not found.");
 
             var workout = new Workout
             {
                 UserId = userId,
-                Exercises = exercises
+                Exercises = exercises,
+                CatalogExercises = catalogExercises
             };
 
             _context.Workouts.Add(workout);
@@ -84,6 +91,15 @@ namespace workoutapp_API.services.Workouts
                 ExerciseId = e.ExerciseId,
                 ExerciseName = e.ExerciseName,
                 PrimaryMuscle = e.PrimaryMuscle
+            }).ToList(),
+            CatalogExercises = w.CatalogExercises.Select(e => new CatalogExerciseDTO
+            {
+                Id = e.Id,
+                Name = e.Name,
+                Level = e.Level,
+                Equipment = e.Equipment,
+                Category = e.Category,
+                PrimaryMuscles = e.PrimaryMuscles
             }).ToList()
         };
     }
