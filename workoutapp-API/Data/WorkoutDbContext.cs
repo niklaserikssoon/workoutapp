@@ -14,6 +14,7 @@ public class WorkoutDbContext : DbContext
     public DbSet<Exercise> Exercises => Set<Exercise>();
     public DbSet<Workout> Workouts => Set<Workout>();
     public DbSet<ExerciseCatalog> ExerciseCatalog => Set<ExerciseCatalog>();
+    public DbSet<AIWorkout> AIWorkouts => Set<AIWorkout>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
