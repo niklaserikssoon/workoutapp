@@ -22,16 +22,16 @@ namespace workoutapp_API.controllers
         /// <summary>
         /// Generates a personalized workout plan using AI and saves it.
         /// </summary>
+        /// <summary>
+        /// Generates a workout plan using AI without saving it.
+        /// </summary>
         [Authorize]
         [HttpPost("generate-plan")]
         public async Task<ActionResult<GeneratePlanResponseDTO>> GeneratePlanAsync([FromBody] GeneratePlanRequestDTO request)
         {
-            var userId = GetUserId();
-            if (userId == null) return Unauthorized();
-
             try
             {
-                var result = await _aiPlanService.GeneratePlanAsync(request, userId.Value);
+                var result = await _aiPlanService.GeneratePlanAsync(request);
                 return Ok(result);
             }
             catch (OperationCanceledException)
@@ -42,6 +42,20 @@ namespace workoutapp_API.controllers
             {
                 return StatusCode(502, new { Message = "AI service is currently unavailable. Please try again later." });
             }
+        }
+
+        /// <summary>
+        /// Saves a generated AI plan to the database.
+        /// </summary>
+        [Authorize]
+        [HttpPost("plans")]
+        public async Task<ActionResult<GeneratePlanResponseDTO>> SavePlanAsync([FromBody] SaveAIPlanDTO dto)
+        {
+            var userId = GetUserId();
+            if (userId == null) return Unauthorized();
+
+            var result = await _aiPlanService.SavePlanAsync(dto, userId.Value);
+            return Ok(result);
         }
 
         /// <summary>

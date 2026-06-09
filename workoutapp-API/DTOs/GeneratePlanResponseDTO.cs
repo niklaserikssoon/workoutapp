@@ -26,4 +26,10 @@ namespace workoutapp_API.DTOs
     {
         public List<AIPlanDayDTO> Days { get; set; } = [];
     }
+
+    public class SaveAIPlanDTO
+    {
+        public string Goal { get; set; } = string.Empty;
+        public List<AIPlanDayDTO> Plan { get; set; } = [];
+    }
 }
