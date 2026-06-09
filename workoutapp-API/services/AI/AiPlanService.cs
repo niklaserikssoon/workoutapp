@@ -28,7 +28,7 @@ namespace workoutapp_API.services.AI
             _context = context;
         }
 
-        public async Task<GeneratePlanResponseDTO> GeneratePlanAsync(GeneratePlanRequestDTO request, int userId)
+        public async Task<GeneratePlanResponseDTO> GeneratePlanAsync(GeneratePlanRequestDTO request)
         {
             var equipment = string.IsNullOrWhiteSpace(request.Equipment) ? "any equipment" : request.Equipment;
 
@@ -73,10 +73,22 @@ namespace workoutapp_API.services.AI
                 PropertyNameCaseInsensitive = true
             }) ?? new AIPlanJsonDTO();
 
+            return new GeneratePlanResponseDTO
+            {
+                Goal = request.Goal,
+                CreatedAt = DateTime.UtcNow,
+                Plan = parsed.Days
+            };
+        }
+
+        public async Task<GeneratePlanResponseDTO> SavePlanAsync(SaveAIPlanDTO dto, int userId)
+        {
+            var json = JsonSerializer.Serialize(new AIPlanJsonDTO { Days = dto.Plan });
+
             var aiWorkout = new AIWorkout
             {
                 UserId = userId,
-                Goal = request.Goal,
+                Goal = dto.Goal,
                 Plan = json
             };
 
@@ -88,7 +100,7 @@ namespace workoutapp_API.services.AI
                 AIWorkoutId = aiWorkout.AIWorkoutId,
                 Goal = aiWorkout.Goal,
                 CreatedAt = aiWorkout.CreatedAt,
-                Plan = parsed.Days
+                Plan = dto.Plan
             };
         }
 
