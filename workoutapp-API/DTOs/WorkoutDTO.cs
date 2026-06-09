@@ -6,6 +6,7 @@ namespace workoutapp_API.DTOs
     {
         public int WorkoutId { get; set; }
         public int UserId { get; set; }
+        public string Name { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public List<ExerciseDTO> Exercises { get; set; } = [];
         public List<CatalogExerciseDTO> CatalogExercises { get; set; } = [];
@@ -30,6 +31,8 @@ namespace workoutapp_API.DTOs
 
     public class CreateWorkoutDTO
     {
+        [Required]
+        public string Name { get; set; } = string.Empty;
         public List<int> ExerciseIds { get; set; } = [];
         public List<string> CatalogExerciseIds { get; set; } = [];
     }

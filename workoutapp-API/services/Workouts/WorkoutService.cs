@@ -56,6 +56,7 @@ namespace workoutapp_API.services.Workouts
             var workout = new Workout
             {
                 UserId = userId,
+                Name = dto.Name,
                 Exercises = exercises,
                 CatalogExercises = catalogExercises
             };
@@ -85,6 +86,7 @@ namespace workoutapp_API.services.Workouts
         {
             WorkoutId = w.WorkoutId,
             UserId = w.UserId,
+            Name = w.Name,
             CreatedAt = w.CreatedAt,
             Exercises = w.Exercises.Select(e => new ExerciseDTO
             {
