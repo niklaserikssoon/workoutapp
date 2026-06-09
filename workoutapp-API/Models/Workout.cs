@@ -13,4 +13,6 @@ public class Workout
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
     public virtual ICollection<Exercise> Exercises { get; set; } = new List<Exercise>();
+
+    public virtual ICollection<ExerciseCatalog> CatalogExercises { get; set; } = new List<ExerciseCatalog>();
 }
