@@ -7,23 +7,82 @@ on:
     branches: [ "main", "dev" ]
 
 jobs:
-  build_and_test:
+  test:
     runs-on: ubuntu-latest
-
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: 9.0.x
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.x'
 
-    - name: Restore dependencies
-      run: dotnet restore
+      - name: Restore dependencies
+        run: dotnet restore
 
-    - name: Build
-      run: dotnet build --configuration Release --no-restore
+      - name: Build
+        run: dotnet build --no-restore
 
-    - name: Run tests
-      run: dotnet test --configuration Release --no-restore --verbosity normal
+      - name: Run tests
+        run: dotnet test --no-build --verbosity normal
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to ACR
+        uses: docker/login-action@v3
+        with:
+          registry: deploymentdnyamosacr.azurecr.io
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build and push workoutapp-api
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: workoutapp-API/Dockerfile
+          push: true
+          provenance: false
+          tags: |
+            deploymentdnyamosacr.azurecr.io/workoutapp-api:latest
+            deploymentdnyamosacr.azurecr.io/workoutapp-api:${{ github.sha }}
+
+      - name: Build and push user-api
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: User-API/Dockerfile
+          push: true
+          provenance: false
+          tags: |
+            deploymentdnyamosacr.azurecr.io/user-api:latest
+            deploymentdnyamosacr.azurecr.io/user-api:${{ github.sha }}
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Deploy workoutapp-api
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az containerapp update \
+              --name workoutapp-api \
+              --resource-group deployment-dynamos-rg \
+              --image deploymentdnyamosacr.azurecr.io/workoutapp-api:${{ github.sha }}
+
+      - name: Deploy user-api
+        uses: azure/cli@v2
+        with:
+          azcliversion: latest
+          inlineScript: |
+            az containerapp update \
+              --name user-api \
+              --resource-group deployment-dynamos-rg \
+              --image deploymentdnyamosacr.azurecr.io/user-api:${{ github.sha }}

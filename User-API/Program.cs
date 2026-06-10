@@ -1,21 +1,14 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.IdentityModel.Tokens;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using Scalar.AspNetCore;
 using System.Text;
-using System.Text;
-using System.Threading.RateLimiting;
 using System.Threading.RateLimiting;
 using User_API.Data;
 using User_API.Filters;
-using User_API.Models;
 using User_API.Repositories;
 using User_API.Service;
 
@@ -39,7 +32,7 @@ builder.Services.AddHttpClient("WorkoutApi", client =>
 });
 
 builder.Services.AddDbContext<UserDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
 
 builder.Services.AddApiVersioning(options =>
 {
@@ -55,20 +48,13 @@ builder.Services.AddApiVersioning(options =>
 });
 
 // CORS-Policy
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins("http://localhost:5501", "http://127.0.0.1:5501", "http://localhost:3000", "http://192.168.0.36:3000") // Frontend port
-            .WithMethods("GET", "POST", "PUT", "DELETE")
-            .WithOrigins(
-                "http://localhost:5501",
-                "http://127.0.0.1:5501",
-                "http://localhost:5500",
-                "http://127.0.0.1:5500",
-                "http://192.168.1.157:5500"
-            )
+            .WithOrigins(allowedOrigins)
             .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type");
     });

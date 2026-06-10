@@ -17,4 +17,5 @@ public class Exercise
     public string PrimaryMuscle { get; set; } = null!;
 
     public virtual ICollection<Workout> Workouts { get; set; } = new List<Workout>();
+
 }

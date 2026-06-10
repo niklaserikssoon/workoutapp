@@ -9,12 +9,18 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Threading.RateLimiting;
+using workoutapp_API.ExceptionMiddleware;
+using workoutapp_API.services.AI;
+using workoutapp_API.services.Catalog;
 using workoutapp_API.services.Exercises;
 using workoutapp_API.services.External;
+using workoutapp_API.services.Workouts;
 using System.Text;
 
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddApplicationInsightsTelemetry();
 
 // Add services to the container.
 builder.Services.AddControllers(options => 
@@ -26,7 +32,7 @@ builder.Services.AddControllers(options =>
 
 // Database context
 builder.Services.AddDbContext<WorkoutDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+    options.UseSqlServer(builder.Configuration.GetConnectionString("WorkoutDb")));
 
 //  cache
 builder.Services.AddMemoryCache();
@@ -40,6 +46,12 @@ builder.Services.AddHttpClient<IExternalExercise, ExternalExercise>(client =>
 // Local exercise service & save exercise service
 builder.Services.AddScoped<IExerciseService, ExerciseService>();
 builder.Services.AddScoped<ISaveExerciseService, SaveExerciseService>();
+builder.Services.AddScoped<IExerciseCatalogSeedService, ExerciseCatalogSeedService>();
+builder.Services.AddScoped<IExerciseCatalogService, ExerciseCatalogService>();
+builder.Services.AddScoped<IWorkoutService, WorkoutService>();
+
+// AI plan service
+builder.Services.AddScoped<IAiPlanService, AiPlanService>();
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
@@ -109,18 +121,13 @@ builder.Services.AddApiVersioning(options =>
 });
 
 // CORS-Policy
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
         policy
-            .WithOrigins(
-                "http://localhost:5501",
-                "http://127.0.0.1:5501",
-                "http://localhost:5500",
-                "http://127.0.0.1:5500",
-                "http://192.168.1.157:5500"
-            )
+            .WithOrigins(allowedOrigins)
             .WithMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .WithHeaders("Authorization", "Content-Type");
     });
@@ -150,6 +157,7 @@ var jwtIssuer = builder.Configuration["Jwt:Issuer"]
 var jwtAudience = builder.Configuration["Jwt:Audience"]
     ?? throw new InvalidOperationException("JWT audience is missing.");
 
+// Add authentication with JWT bearer tokens
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -175,6 +183,16 @@ builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<WorkoutDbContext>();
+    if (!context.ExerciseCatalog.Any())
+    {
+        var seedService = scope.ServiceProvider.GetRequiredService<IExerciseCatalogSeedService>();
+        await seedService.SeedFromExternalApiAsync();
+    }
+}
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -188,6 +206,9 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+// Global exception handling middleware
+app.UseMiddleware<ExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 app.UseRouting();

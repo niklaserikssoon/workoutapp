@@ -34,6 +34,7 @@ namespace workoutapp_API.services.Exercises
         {
             var exercise = new Exercise
             {
+                ExternalExerciseId = string.Empty,
                 ExerciseName = dto.ExerciseName,
                 PrimaryMuscle = dto.PrimaryMuscle
             };
